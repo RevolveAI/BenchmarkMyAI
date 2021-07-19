@@ -17,7 +17,7 @@ class Benchmark:
         self.batch_size = batch_size
         self.device = gpu_device
         self.img_size = img_size
-    def memory_info(self):
+    def memoryInfo(self):
         memory_info = tf.config.experimental.get_memory_info(self.device)
         memory_used = dict()
         for _mt in memory_info:
@@ -34,6 +34,9 @@ class Benchmark:
         if (type(self.model) is str) and ('efficientdet' in self.model):
             from ..models import efficientdetD0
             inference = efficientdetD0.executeInfer(model_name=self.model, batch_size=self.batch_size)
+            if not inference[0]:
+                return inference[1]
+            inference = inference[1]
             inference_time_batch = inference['inference_time_batch']*1000
             fps = inference['fps']
             std_time = None
