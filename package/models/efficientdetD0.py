@@ -3,13 +3,31 @@
 import subprocess
 import os
 #%%
-def executeInfer(model_name='efficientdet-d0', batch_size=16):
+def executeInfer(model_name, batch_size, image_size):
+    '''
+    
+
+    Parameters
+    ----------
+    model_name : TYPE: str
+        DESCRIPTION.Like efficientdet-d0, efficientdet-d1, ..., efficientdet-d7
+    batch_size : TYPE: int
+        DESCRIPTION.
+    image_size : TYPE: tuple
+        DESCRIPTION. (244, 244)
+
+    Returns
+    -------
+    list
+        DESCRIPTION.
+
+    '''
     #%%
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/')
     #%%
     process = subprocess.Popen(['python', model_path + '/model_inspect.py', '--runmode', 'bm',
                                 '--model_name', model_name, '--batch_size', str(batch_size), 
-                                '--hparams', "mixed_precision=True"],
+                                '--hparams', f"image_size={image_size[0]}x{image_size[1]},mixed_precision=True"],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
