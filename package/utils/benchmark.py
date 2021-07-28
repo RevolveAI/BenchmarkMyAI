@@ -9,6 +9,9 @@ Created on Fri Jul 16 16:47:22 2021
 import tensorflow as tf
 import numpy as np
 import time
+import re
+from .. import models
+from sys import exc_info
 
 
 class Benchmark:
@@ -27,12 +30,13 @@ class Benchmark:
   
     def execute(self):
         with tf.device(self.device):
-            if ('CPU' not in self.device):    
+            if 'CPU' not in self.device:
                 print('Before Execution:')
                 _ = self.memoryInfo()
             if (type(self.model) is str) and ('efficientdet' in self.model):
-                from ..models import efficientdetD0
-                inference = efficientdetD0.executeInfer(model_name=self.model, batch_size=self.batch_size, image_size=self.img_size)
+                # from ..models import efficientdet
+                efficientdet = models.efficientdet
+                inference = efficientdet.executeInfer(model_name=self.model, batch_size=self.batch_size, image_size=self.img_size)
                 if not inference[0]:
                     return inference[1]
                 inference = inference[1]
@@ -41,29 +45,20 @@ class Benchmark:
                 std_time = None
             else:
                 if type(self.model) is str:
-                    if self.model == 'ResNet50':
-                        assert self.img_size == (224, 224), 'Input image size must be (224,224)'
-                        from tensorflow.keras.applications.resnet50 import ResNet50
-                        model = ResNet50()
-                    elif self.model == 'ResNet101':
-                        assert self.img_size == (224, 224), 'Input image size must be (224,224)'
-                        from tensorflow.keras.applications.resnet import ResNet101
-                        model = ResNet101()
-                    elif self.model == 'MobileNet':
-                        assert self.img_size == (224, 224), 'Input image size must be (224,224)'
-                        from tensorflow.keras.applications.mobilenet import MobileNet
-                        model = MobileNet()
-                    elif self.model == 'MobileNetV2':
-                        assert self.img_size == (224, 224), 'Input image size must be (224,224)'
-                        from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-                        model = MobileNetV2()
-                    elif 'MobileNetV3' in self.model:
-                        assert self.img_size == (224, 224), 'Input image size must be (224,224)'
-                        from tensorflow.keras import applications
-                        model = eval('applications.'+self.model+'(input_shape=(224, 224, 3))')
-                    elif 'EfficientNet' in self.model:
-                        from tensorflow.keras.applications import efficientnet
-                        model = eval('efficientnet.'+self.model+'()')
+                    if re.match('(ResNet|MobileNet|EfficientNet|NASNet){1}.*', self.model):
+                        # from ..models import KerasModels
+                        KerasModels = models.KerasModels
+                        model = KerasModels().load(self.model, self.img_size)
+                        assert model[0], model[1]
+                        model = model[1]
+                    else:
+                        try:
+                            model = eval(f'models.{self.model}')
+                            model = model(img_size=self.img_size)
+                        except AssertionError:
+                            raise AssertionError(exc_info()[1])
+                        except:
+                            raise ValueError("invalid model name")
                 else:
                     model = self.model
                 test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))

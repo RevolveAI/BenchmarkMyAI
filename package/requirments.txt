@@ -1,0 +1,5 @@
+pip install -r requirements.txt ##### install from efficientdet directory
+
+!python -m pip install --no-deps tf-models-official
+pip install tensorflow-addons tensorflow-datasets gin-config pycocotools
+pip install opencv
