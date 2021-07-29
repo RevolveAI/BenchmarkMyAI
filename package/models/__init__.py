@@ -3,4 +3,4 @@
 
 from . import efficientdet
 from .kerasModels import KerasModels
-from .spineNet import spineNet
+from .spineNet import SpineNet

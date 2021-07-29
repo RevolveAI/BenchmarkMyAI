@@ -1,0 +1,6 @@
+init:
+	pip install -r requirements.txt
+	pip install git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI
+	python -m pip install --no-deps tf-models-official
+test:
+	nosetests tests

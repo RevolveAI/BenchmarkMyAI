@@ -34,5 +34,6 @@ class KerasModels:
             #     return [False, 'invalid model name']
         except AttributeError:
             return [False, 'invalid model name']
+        model.__framework__ = 'TensorFlow ' + tf.__version__
+        model.__name__ = model.get_config()['name']
         return [True, model]
-

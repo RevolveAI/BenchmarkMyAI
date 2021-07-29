@@ -2,6 +2,7 @@
 #%%
 import subprocess
 import os
+import tensorflow as tf
 #%%
 def executeInfer(model_name, batch_size, image_size):
     '''
@@ -40,4 +41,6 @@ def executeInfer(model_name, batch_size, image_size):
         return [False, {'result': result, 'error': stderr}]
     #%%
     return [True, {'inference_time_batch': inference_time_batch,
-            'fps': fps}]
+                   'fps': fps,
+                   'framework': 'TensorFlow ' + tf.__version__,
+                   'name': model_name}]
