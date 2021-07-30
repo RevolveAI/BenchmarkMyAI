@@ -21,11 +21,11 @@ class WandB:
     def plot_and_table(self, benchmarks):
         bm = copy.deepcopy(benchmarks)
         self.plot(bm['benchmark'])
-        bm.update(benchmarks['benchmark'])
+        bm.update(bm['benchmark'])
         _ = bm.pop('benchmark')
         _ = bm.pop('memory_info')
-        if benchmarks['std'] is None:
-            benchmarks['std'] = 'null'
+        if bm['std'] is None:
+            bm['std'] = 'null'
         self.draw_table(bm)
     def close(self):
         self._instance_.finish()
