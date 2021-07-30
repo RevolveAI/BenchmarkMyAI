@@ -16,20 +16,35 @@ A repository that contains code and benchmarks for commonly used models in Revol
 ## Directory Tree
 
 Repository
+
 ├── package
+
 │   ├── __init__.py
+
 │   ├── make
+
 │   ├── models
+
 │   │   ├── efficientdet.py
+
 │   │   ├── __init__.py
+
 │   │   ├── kerasModels.py
+
 │   │   ├── saved_models
+
 │   │   └── spineNet.py
+
 │   ├── requirements.txt
+
 │   └── utils
+
 │       ├── benchmark.py
+
 │       ├── __init__.py
+
 │       └── wandb.py
+
 └── README.md
 
 
