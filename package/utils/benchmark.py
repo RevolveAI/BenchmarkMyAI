@@ -17,6 +17,7 @@ import cpuinfo
 import GPUtil
 import psutil
 from .wandb import WandB
+import os
 
 class Benchmark:
     def __init__(self, model, batch_size, img_size, device='CPU:0'):
@@ -37,54 +38,58 @@ class Benchmark:
             if 'CPU' not in self.device:
                 print('Before Execution:')
                 _ = self.memoryInfo()
-            if (type(self.model) is str) and ('efficientdet' in self.model):
-                # from ..models import efficientdet
-                efficientdet = models.efficientdet
-                inference = efficientdet.executeInfer(model_name=self.model, batch_size=self.batch_size, image_size=self.img_size)
-                if not inference[0]:
-                    return inference[1]
-                inference = inference[1]
-                inference_time_batch = inference['inference_time_batch']*1000
-                fps = inference['fps']
-                std_time = None
-                framework = inference['framework']
-                model_name = inference['name']
-            else:
-                if type(self.model) is str:
-                    if re.match('(ResNet|MobileNet|EfficientNet|NASNet){1}.*', self.model):
-                        # from ..models import KerasModels
-                        KerasModels = models.KerasModels
-                        model = KerasModels().load(self.model, self.img_size)
-                        assert model[0], model[1]
-                        model = model[1]
-                        framework = model.__framework__
-                        model_name = model.__name__
-                    else:
-                        try:
-                            model = eval(f'models.{self.model}')
-                            model = model(img_size=self.img_size)
-                            framework = model.__framework__
-                            model_name = model.__name__
-                        except AssertionError:
-                            raise AssertionError(exc_info()[1])
-                        except AttributeError:
-                            raise ValueError("invalid model name")
+            test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))
+            # if (type(self.model) is str) and ('efficientdet' in self.model):
+            #     # from ..models import efficientdet
+            #     efficientdet = models.efficientdet
+            #     inference = efficientdet.executeInfer(model_name=self.model, batch_size=self.batch_size, image_size=self.img_size)
+            #     if not inference[0]:
+            #         return inference[1]
+            #     inference = inference[1]
+            #     inference_time_batch = inference['inference_time_batch']*1000
+            #     fps = inference['fps']
+            #     std_time = None
+            #     framework = inference['framework']
+            #     model_name = inference['name']
+            # else:
+            if type(self.model) is str:
+                if re.match('(ResNet|MobileNet|EfficientNet|NASNet){1}.*', self.model):
+                    # from ..models import KerasModels
+                    KerasModels = models.KerasModels
+                    model = KerasModels().load(self.model, self.img_size)
+                    assert model[0], model[1]
+                    model = model[1]
+                    # framework = model.__framework__
+                    # model_name = model.__name__
+                elif re.match('(efficientdet){1}.*', self.model):
+                    model = models.EfficientDet(self.model, self.batch_size)
+                    model()
+                    test_batch_images = model.preprocess_images(test_batch_images)
                 else:
-                    model = self.model
-                test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))
-                for _ in range(2):
-                    model.predict(test_batch_images)
-                time_list = []
-                for _ in range(10):
-                    start_batch = time.perf_counter()
-                    model.predict(test_batch_images)
-                    # print('completed execution')
-                    end_batch = time.perf_counter()
-                    infer = (end_batch - start_batch)*1000
-                    # print('Inference Time of One Iteration:', infer)
-                    time_list.append(infer)
-                inference_time_batch = sum(time_list) / 10
-                std_time = np.std(time_list)
+                    try:
+                        model = eval(f'models.{self.model}')
+                        model = model(img_size=self.img_size)
+                        # framework = model.__framework__
+                        # model_name = model.__name__
+                    except AssertionError:
+                        raise AssertionError(exc_info()[1])
+                    except AttributeError:
+                        raise ValueError("invalid model name")
+            else:
+                model = self.model
+            framework = model.__framework__
+            model_name = model.__name__
+            for _ in range(10):
+                model.predict(test_batch_images)
+            time_list = []
+            for _ in range(10):
+                start_batch = time.perf_counter()
+                model.predict(test_batch_images)
+                end_batch = time.perf_counter()
+                infer = (end_batch - start_batch)*1000
+                time_list.append(infer)
+            inference_time_batch = sum(time_list) / 10
+            std_time = np.std(time_list)
             memory_info = {}
             if 'CPU' not in self.device:
                 print('After Execution:')
@@ -105,7 +110,7 @@ class Benchmark:
                     bytes /= factor
             output = {
                     'model': model_name,
-                    'input_size': f'{self.img_size[0]}x{self.img_size[1]}',
+                    'input_size': f'{test_batch_images.shape[1]}x{test_batch_images.shape[2]}',
                     'batch_size': self.batch_size,
                     'cpu': cpuinfo.get_cpu_info()['brand_raw'],
                     'gpus': ' | '.join([gpu.name for gpu in GPUtil.getGPUs()]) if 'CPU' not in self.device else '',

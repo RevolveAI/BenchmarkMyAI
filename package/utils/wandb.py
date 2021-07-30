@@ -11,6 +11,8 @@ class WandB:
     def init(self):
         self._instance_ = wandb.init(project=self.project_name, name=self.run_name)
     def plot(self, benchmarks):
+        if benchmarks['std'] is None:
+            benchmarks['std'] = 0
         wandb.log(benchmarks)
     def draw_table(self, benchmarks):
         table = wandb.Table(columns=list(benchmarks.keys()))
@@ -22,6 +24,8 @@ class WandB:
         bm.update(benchmarks['benchmark'])
         _ = bm.pop('benchmark')
         _ = bm.pop('memory_info')
+        if benchmarks['std'] is None:
+            benchmarks['std'] = 'null'
         self.draw_table(bm)
     def close(self):
         self._instance_.finish()

@@ -18,3 +18,4 @@ py-cpuinfo
 gputil
 opencv-python
 wandb
+wget

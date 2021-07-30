@@ -1,46 +1,77 @@
 
-#%%
-import subprocess
+
 import os
+import wget
+import tarfile
+import subprocess
 import tensorflow as tf
-#%%
-def executeInfer(model_name, batch_size, image_size):
-    '''
-    
+import shutil
 
-    Parameters
-    ----------
-    model_name : TYPE: str
-        DESCRIPTION.Like efficientdet-d0, efficientdet-d1, ..., efficientdet-d7
-    batch_size : TYPE: int
-        DESCRIPTION.
-    image_size : TYPE: tuple
-        DESCRIPTION. (244, 244)
-
-    Returns
-    -------
-    list
-        DESCRIPTION.
-
-    '''
-    #%%
-    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/')
-    #%%
-    process = subprocess.Popen(['python', model_path + '/model_inspect.py', '--runmode', 'bm',
-                                '--model_name', model_name, '--batch_size', str(batch_size), 
-                                '--hparams', f"image_size={image_size[0]}x{image_size[1]},mixed_precision=True"],
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    result = stdout.decode("utf-8")
-    #%%
-    try:
-        inference_time_batch = float(result.split('Per batch inference time:  ')[1].split('\n')[0])
-        fps = float(result.split('FPS:  ')[1])
-    except:
-        return [False, {'result': result, 'error': stderr}]
-    #%%
-    return [True, {'inference_time_batch': inference_time_batch,
-                   'fps': fps,
-                   'framework': 'TensorFlow ' + tf.__version__,
-                   'name': model_name}]
+class EfficientDet:
+    def __init__(self, model_name, batch_size, img_size=None):
+        self.model_name = model_name
+        self.batch_size = batch_size
+        self.img_size = img_size
+        self.export_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/tmp')
+        self.export_model_dir = self.export_dir + '/model'
+        self._model_ = None
+        self.__framework__ = 'TensorFlow ' + tf.__version__
+        self.__name__ = model_name
+    def download_checkpoints(self):
+        try:
+            os.removedirs(self.export_dir)
+        except:
+            pass
+        os.makedirs(self.export_dir)
+        filename = wget.download(f'https://storage.googleapis.com/cloud-tpu-checkpoints/efficientdet/coco/{self.model_name}.tar.gz',
+                               out=self.export_dir)
+        tar = tarfile.open(filename, "r:gz")
+        tar.extractall(self.export_dir)
+        tar.close()
+        os.remove(filename)
+        ckpt_path = f'{self.export_dir}/{self.model_name}'
+        self.ckpt_path = ckpt_path
+    def export_model(self):
+        os.makedirs(self.export_model_dir)
+        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/')
+        # %%
+        process = subprocess.Popen(['python', model_path + '/model_inspect.py', '--runmode', 'saved_model',
+                                    '--model_name', self.model_name, '--ckpt_path', self.ckpt_path,
+                                    '--saved_model_dir', self.export_model_dir,
+                                    '--batch_size', str(self.batch_size),
+                                    '--hparams', f"mixed_precision=True"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if stderr == '':
+            [False, stderr.decode("utf-8")]
+        else:
+            return [True]
+        # result = stdout.decode("utf-8")
+    def load_model(self):
+        model = tf.saved_model.load(self.export_model_dir)
+        model = model.signatures['serving_default']
+        self._model_ = model
+    def preprocess_images(self, input_images):
+        images = input_images.copy()
+        phi = int(self.model_name.split('-d')[1])
+        res = 512 + phi * 128
+        images = tf.cast(images, tf.float32)
+        images = tf.image.resize_with_pad(images, res, res)
+        if len(images.shape) == 3:
+            images = tf.expand_dims(images, 0)
+            batches = 1
+        else:
+            batches = images.shape[0]
+        images.set_shape((batches, res, res, 3))
+        return tf.cast(images, tf.uint8)
+    def predict(self, input_images):
+        return self._model_(input_images)
+    def delete_tmp_dir(self):
+        shutil.rmtree(self.export_dir)
+    def __call__(self):
+        self.download_checkpoints()
+        _ = self.export_model()
+        assert _[0], _[1]
+        self.load_model()
+        self.delete_tmp_dir()
