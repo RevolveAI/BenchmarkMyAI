@@ -23,7 +23,6 @@ class WandB:
         self.plot(bm['benchmark'])
         bm.update(bm['benchmark'])
         _ = bm.pop('benchmark')
-        _ = bm.pop('memory_info')
         if bm['std'] is None:
             bm['std'] = 'null'
         self.draw_table(bm)
