@@ -91,10 +91,11 @@ class Benchmark:
             inference_time_batch = sum(time_list) / 10
             std_time = np.std(time_list)
         throughput_time = inference_time_batch / self.batch_size
-        memory_info = {}
+        gpu_memory_used = ''
         if 'CPU' not in self.device:
             print('After Execution:')
             memory_info = self.memoryInfo()
+            gpu_memory_used = memory_info['peak']
             # memory_info = {'device': self.device, **memory_info}
 
         def get_size(bytes, suffix="B"):
@@ -113,7 +114,7 @@ class Benchmark:
                 'os': platform.version(),
                 'python': platform.python_version(),
                 'framework': framework,
-                'gpu_memory_used': memory_info['peak'],
+                'gpu_memory_used': gpu_memory_used,
                 'benchmark': {
                     'inference_time': inference_time_batch,
                     'throughput_time': throughput_time,
