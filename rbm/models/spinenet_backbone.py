@@ -3,10 +3,10 @@
 #%%
 import tensorflow as tf
 from official.vision.beta.modeling.backbones.spinenet import SpineNet as spineNet
-import cv2
 
-def SpineNet(img_size, **kwargs):
-    assert img_size == (28,28), 'image size must be (28,28)'
+def SpineNetBackbone(img_size, **kwargs):
+    assert img_size[0] == img_size[1], 'input must be a square image'
+    assert img_size[0]/2**5 % 2 == 0, 'image size is not valid, try something else e.g. some valid values are (28,28), (128,128), (192,192)'
     target_size = img_size
     #%%
     outshape = (4,2)
@@ -23,7 +23,7 @@ def SpineNet(img_size, **kwargs):
     x = tf.keras.layers.Dense(outsize)(x)
     output = tf.keras.layers.Reshape(outshape)(x)
     #%%
-    model = tf.keras.Model(inputs= inputs,outputs=output)
-    model.__framework__ = 'TensorFlow ' + tf.__version__ + ' | ' 'OpenCV ' + cv2.__version__
-    model.__name__ = 'spinenet'
+    model = tf.keras.Model(inputs=inputs, outputs=output)
+    model.__framework__ = 'TensorFlow ' + tf.__version__
+    model.__name__ = 'spinenet-backbone'
     return model

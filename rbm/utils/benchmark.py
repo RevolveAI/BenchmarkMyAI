@@ -32,12 +32,8 @@ class Benchmark:
             memory_used.update({_mt: str(round(memory_info[_mt]*1e-6, 2))+'MB'})
             print(_mt+' memory used:', round(memory_info[_mt]*1e-6, 2), 'MB')
         return memory_used
-  
-    def execute(self, wandb=False):
-        if 'CPU' not in self.device:
-            print('Before Execution:')
-            _ = self.memoryInfo()
-        test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))
+
+    def load_model(self):
         # if (type(self.model) is str) and ('efficientdet' in self.model):
         #     # from ..models import efficientdet
         #     efficientdet = models.efficientdet
@@ -63,7 +59,6 @@ class Benchmark:
             elif re.match('(efficientdet){1}.*', self.model):
                 model = models.EfficientDet(self.model, self.batch_size)
                 model()
-                test_batch_images = model.preprocess_images(test_batch_images)
             else:
                 try:
                     model = eval(f'models.{self.model}')
@@ -76,21 +71,48 @@ class Benchmark:
                     raise ValueError("invalid model name")
         else:
             model = self.model
-        framework = model.__framework__
-        model_name = model.__name__
+        return model
+
+    def _calculate_benchmarks(self, model, inputs):
         with tf.device(self.device):
-            for _ in range(10):
-                model.predict(test_batch_images)
+            for _ in range(5):
+                model.predict(inputs)
             time_list = []
             for _ in range(10):
                 start_batch = time.perf_counter()
-                model.predict(test_batch_images)
+                model.predict(inputs)
                 end_batch = time.perf_counter()
                 infer = (end_batch - start_batch)*1000
                 time_list.append(infer)
             inference_time_batch = sum(time_list) / 10
             std_time = np.std(time_list)
         throughput_time = inference_time_batch / self.batch_size
+        return {
+            'inference_time': inference_time_batch,
+            'throughput_time': throughput_time,
+            'std': std_time
+        }
+
+    def _wandb(self, project_name, model_name, output):
+        run_name = f"{model_name} {output['input_size']} {self.batch_size}"
+        wandb_instance = WandB(project_name=project_name, run_name=run_name)
+        wandb_instance.init()
+        wandb_instance.plot_and_table(benchmarks=output)
+        wandb_instance.close()
+
+    def execute(self, wandb=False, project_name='benchmarks'):
+        if 'CPU' not in self.device:
+            print('Before Execution:')
+            _ = self.memoryInfo()
+        test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))
+        model = self.load_model()
+        try:
+            test_batch_images = model.preprocess_images(test_batch_images)
+        except:
+            pass
+        framework = model.__framework__
+        model_name = model.__name__
+        benchmarks = self._calculate_benchmarks(model=model, inputs=test_batch_images)
         gpu_memory_used = ''
         if 'CPU' not in self.device:
             print('After Execution:')
@@ -115,16 +137,8 @@ class Benchmark:
                 'python': platform.python_version(),
                 'framework': framework,
                 'gpu_memory_used': gpu_memory_used,
-                'benchmark': {
-                    'inference_time': inference_time_batch,
-                    'throughput_time': throughput_time,
-                    'std': std_time
-                    }
+                'benchmark': benchmarks
                 }
         if wandb:
-            run_name = f'{model_name} {self.img_size[0]}x{self.img_size[1]} {self.batch_size}'
-            wandb_instance = WandB(project_name='benchmarks', run_name=run_name)
-            wandb_instance.init()
-            wandb_instance.plot_and_table(benchmarks=output)
-            wandb_instance.close()
+            self._wandb(project_name=project_name, model_name=model_name, output=output)
         return output

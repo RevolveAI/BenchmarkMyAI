@@ -19,7 +19,7 @@ class EfficientDet:
         self.__name__ = model_name
     def download_checkpoints(self):
         try:
-            os.removedirs(self.export_dir)
+            shutil.rmtree(self.export_dir)
         except:
             pass
         os.makedirs(self.export_dir)
@@ -43,8 +43,8 @@ class EfficientDet:
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        if stderr == '':
-            [False, stderr.decode("utf-8")]
+        if stdout == '':
+            return [False, stderr.decode("utf-8")]
         else:
             return [True]
         # result = stdout.decode("utf-8")
