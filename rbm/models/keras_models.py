@@ -7,33 +7,11 @@ class KerasModels:
     def __init__(self):
         pass
 
-    def load(self, model, img_size):
-        try:
-            if model == 'ResNet50':
-                assert img_size == (224, 224), 'Input image size must be (224,224)'
-                model = tf.keras.applications.resnet50.ResNet50()
-            elif model == 'ResNet101':
-                assert img_size == (224, 224), 'Input image size must be (224,224)'
-                model = tf.keras.applications.resnet.ResNet101()
-            elif model == 'MobileNet':
-                assert img_size == (224, 224), 'Input image size must be (224,224)'
-                model = tf.keras.applications.mobilenet.MobileNet()
-            elif model == 'MobileNetV2':
-                assert img_size == (224, 224), 'Input image size must be (224,224)'
-                model = tf.keras.applications.mobilenet_v2.MobileNetV2()
-            elif 'MobileNetV3' in model:
-                assert img_size == (224, 224), 'Input image size must be (224,224)'
-                model = eval('tf.keras.applications.' + model + '(input_shape=(224, 224, 3))')
-            elif 'EfficientNet' in model:
-                model = eval('tf.keras.applications.efficientnet.' + model + '()')
-            elif 'NASNet' in model:
-                model = eval('tf.keras.applications.nasnet.' + model + '()')
-            # try:
-            #     model
-            # finally:
-            #     return [False, 'invalid model name']
-        except AttributeError:
-            return [False, 'invalid model name']
+    @staticmethod
+    def load(model, img_size, **kwargs):
+        model = eval('tf.keras.applications.' + model)
+        include_top = kwargs.pop('include_top', False)
+        model = model(input_shape=(*img_size, 3), include_top=include_top, **kwargs)
         model.__framework__ = 'TensorFlow ' + tf.__version__
         model.__name__ = model.get_config()['name']
-        return [True, model]
+        return model

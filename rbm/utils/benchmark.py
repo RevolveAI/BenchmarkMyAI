@@ -20,11 +20,12 @@ from .wandb import WandB
 import os
 
 class Benchmark:
-    def __init__(self, model, batch_size, img_size, device='CPU:0'):
+    def __init__(self, model, batch_size, img_size, device='CPU:0', **kwargs):
         self.model = model
         self.batch_size = batch_size
         self.device = device
         self.img_size = img_size
+        self.kwargs = kwargs
     def memoryInfo(self):
         memory_info = tf.config.experimental.get_memory_info(self.device)
         memory_used = dict()
@@ -34,41 +35,20 @@ class Benchmark:
         return memory_used
 
     def load_model(self):
-        # if (type(self.model) is str) and ('efficientdet' in self.model):
-        #     # from ..models import efficientdet
-        #     efficientdet = models.efficientdet
-        #     inference = efficientdet.executeInfer(model_name=self.model, batch_size=self.batch_size, image_size=self.img_size)
-        #     if not inference[0]:
-        #         return inference[1]
-        #     inference = inference[1]
-        #     inference_time_batch = inference['inference_time_batch']*1000
-        #     fps = inference['fps']
-        #     std_time = None
-        #     framework = inference['framework']
-        #     model_name = inference['name']
-        # else:
         if type(self.model) is str:
-            if re.match('(ResNet|MobileNet|EfficientNet|NASNet){1}.*', self.model):
-                # from ..models import KerasModels
-                KerasModels = models.KerasModels
-                model = KerasModels().load(self.model, self.img_size)
-                assert model[0], model[1]
-                model = model[1]
-                # framework = model.__framework__
-                # model_name = model.__name__
-            elif re.match('(efficientdet){1}.*', self.model):
+            if re.match('(efficientdet){1}.*', self.model):
                 model = models.EfficientDet(self.model, self.batch_size)
                 model()
             else:
                 try:
                     model = eval(f'models.{self.model}')
-                    model = model(img_size=self.img_size)
-                    # framework = model.__framework__
-                    # model_name = model.__name__
-                except AssertionError:
-                    raise AssertionError(exc_info()[1])
+                    model = model(img_size=self.img_size, **self.kwargs)
+                    model()
                 except AttributeError:
-                    raise ValueError("invalid model name")
+                    try:
+                        model = models.KerasModels.load(self.model, self.img_size, **self.kwargs)
+                    except AttributeError:
+                        raise ValueError("invalid model name")
         else:
             model = self.model
         return model
