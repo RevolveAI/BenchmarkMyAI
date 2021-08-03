@@ -17,7 +17,7 @@ A repository that contains code and benchmarks for commonly used models in Revol
 
 ```
 Repository
-├── package
+├── rbm
 │   ├── __init__.py
 │   ├── make
 │   ├── models
@@ -40,7 +40,7 @@ Repository
 To use the package, first clone the the repository on your local machine and move to the location where it is cloned, then install all the requirements as following:
 
 ```
-cd package
+cd rbm
 make -f make
 ```
 
@@ -50,13 +50,13 @@ It will install all the required packages for this library.
 
 ## Run Benchmarks
 
-Move to the directory where `package` folder is located. To calculate benchmarks, run the following code:
+Move to the directory where `rbm` folder is located. To calculate benchmarks, run the following code:
 
 ```python
 # Import the library
-import package as pk
+import rbm
 # Create benchmark instance
-benchmarker = pk.utils.Benchmark(model='ResNet50', batch_size=2, img_size=(224,224), device='CPU:0')
+benchmarker = rbm.utils.Benchmark(model='ResNet50', batch_size=2, img_size=(224,224), device='CPU:0')
 benchmarks = benchmarker.execute()
 ```
 
@@ -85,9 +85,9 @@ After logging in successfully, execute benchmarks `execute` method with `wandb=T
 
 ```python
 # Import the library
-import package as pk
+import rbm
 # Create benchmark instance
-benchmarker = pk.utils.Benchmark(model='ResNet50', batch_size=2, img_size=(224,224), device='CPU:0')
+benchmarker = rbm.utils.Benchmark(model='ResNet50', batch_size=2, img_size=(224,224), device='CPU:0')
 benchmarks = benchmarker.execute(wandb=True)
 ```
 
@@ -117,7 +117,7 @@ There are two ways to execute your custom model.
 1. Pass the `ModelName` class instance as following
 
    ```python
-   benchmarker = pk.utils.Benchmark(model=ModelName, batch_size=2, img_size=(224,224), device='CPU:0')
+   benchmarker = rbm.utils.Benchmark(model=ModelName, batch_size=2, img_size=(224,224), device='CPU:0')
    ```
 
 2. First, add your model in `package/models` directory e.g. add `ModelName` class in the file `model_name.py`
@@ -127,7 +127,7 @@ There are two ways to execute your custom model.
    Then pass the model as following:
 
    ```python
-   benchmarker = pk.utils.Benchmark(model='ModelName', batch_size=2, img_size=(224,224), device='CPU:0')
+   benchmarker = rbm.utils.Benchmark(model='ModelName', batch_size=2, img_size=(224,224), device='CPU:0')
    ```
 
 
@@ -153,7 +153,7 @@ class TestModel:
 Now we can execute this model benchmarks as:
 
 ```python
-benchmarker = pk.utils.Benchmark(model=TestModel, batch_size=2, img_size=(224,224), device='CPU:0')
+benchmarker = rbm.utils.Benchmark(model=TestModel, batch_size=2, img_size=(224,224), device='CPU:0')
 benchmarks = benchmarker.execute()
 ```
 
