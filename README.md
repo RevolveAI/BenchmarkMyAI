@@ -40,8 +40,7 @@ Repository
 To use the package, first clone the the repository on your local machine and move to the location where it is cloned, then install all the requirements as following:
 
 ```
-cd rbm
-make -f make
+make
 ```
 
 It will install all the required packages for this library.
