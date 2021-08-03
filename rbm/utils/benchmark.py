@@ -11,13 +11,13 @@ import numpy as np
 import time
 import re
 from .. import models
-from sys import exc_info
+# from sys import exc_info
 import platform
 import cpuinfo
 import GPUtil
 import psutil
 from .wandb import WandB
-import os
+# import os
 
 class Benchmark:
     def __init__(self, model, batch_size, img_size, device='CPU:0', **kwargs):
@@ -31,7 +31,7 @@ class Benchmark:
         memory_used = dict()
         for _mt in memory_info:
             memory_used.update({_mt: str(round(memory_info[_mt]*1e-6, 2))+'MB'})
-            print(_mt+' memory used:', round(memory_info[_mt]*1e-6, 2), 'MB')
+            # print(_mt+' memory used:', round(memory_info[_mt]*1e-6, 2), 'MB')
         return memory_used
 
     def load_model(self):
@@ -82,9 +82,8 @@ class Benchmark:
         wandb_instance.close()
 
     def execute(self, wandb=False, project_name='benchmarks'):
-        if 'CPU' not in self.device:
-            print('Before Execution:')
-            _ = self.memoryInfo()
+        # if 'CPU' not in self.device:
+        #     _ = self.memoryInfo()
         test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))
         model = self.load_model()
         try:
@@ -96,10 +95,8 @@ class Benchmark:
         benchmarks = self._calculate_benchmarks(model=model, inputs=test_batch_images)
         gpu_memory_used = ''
         if 'CPU' not in self.device:
-            print('After Execution:')
             memory_info = self.memoryInfo()
             gpu_memory_used = memory_info['peak']
-            # memory_info = {'device': self.device, **memory_info}
 
         def get_size(bytes, suffix="B"):
             factor = 1024
