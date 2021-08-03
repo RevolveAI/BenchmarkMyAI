@@ -64,17 +64,10 @@ Output will be as following:
 
 ## List of Available Models
 
-* ResNet50
-* ResNet101
-* MobileNet
-* MobileNetV2
-* MobileNetV3Small
-* MobileNetV3Large
-* EfficientNet(B0-B7) e.g. EfficientNetB0
-* NASNetMobile
-* NASNetLarge
+* InceptionUNet
 * SpineNet
-* efficientdet-(d0-d7) e.g. efficientdet-d0
+* efficientdet-d0 (other possible suffix are d1-d7)
+* All models available in Keras applications, [See](https://www.tensorflow.org/api_docs/python/tf/keras/applications#functions_2) list of Keras available models.
 
 ## Run with Weights and Biases
 
