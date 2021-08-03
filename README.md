@@ -140,9 +140,9 @@ class TestModel:
         self.image_size = img_size
         self._model = None
         self.__framework__ = 'Tensorflow ' + tf.__version__
-        self.__name___ = 'test-model'
+        self.__name__ = 'test-model'
     def __call__(self):
-        inputs = tf.keras.Input((None, 128, 128, 3))
+        inputs = tf.keras.Input((128, 128, 3))
         outputs = tf.keras.layers.Conv2D(6, (1, 1))(inputs)
         model = tf.keras.Model(inputs, outputs)
         self._model = model

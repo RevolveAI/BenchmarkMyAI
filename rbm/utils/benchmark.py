@@ -50,7 +50,8 @@ class Benchmark:
                     except AttributeError:
                         raise ValueError("invalid model name")
         else:
-            model = self.model
+            model = self.model(img_size=self.img_size, **self.kwargs)
+            model()
         return model
 
     def _calculate_benchmarks(self, model, inputs):
