@@ -6,10 +6,11 @@ from tensorflow.keras import Input
 from tensorflow.keras.layers import Conv2D as Convolution2D
 from tensorflow.keras.layers import Activation, BatchNormalization, MaxPooling2D, concatenate
 from tensorflow.keras.layers import UpSampling2D
+from . import plugins
 
-
+@plugins.register
 class InceptionUNet:
-    def __init__(self, img_size, channels=3,  n_labels=2, numFilters=32, output_mode="sigmoid", **kwargs):
+    def __init__(self, img_size, batch_size=None, channels=3,  n_labels=2, numFilters=32, output_mode="sigmoid"):
         self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = 'inception-unet'
         self.img_size = img_size
@@ -18,7 +19,6 @@ class InceptionUNet:
         self.numFilters = numFilters
         self.output_mode = output_mode
         self._model = None
-        self.kwargs = kwargs
 
     def InceptionModule(self, inputs, numFilters=32):
         tower_0 = Convolution2D(numFilters, (1, 1), padding='same', kernel_initializer='he_normal')(inputs)

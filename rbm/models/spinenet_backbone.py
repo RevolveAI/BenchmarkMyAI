@@ -3,15 +3,15 @@
 #%%
 import tensorflow as tf
 from official.vision.beta.modeling.backbones.spinenet import SpineNet as spineNet
+from . import plugins
 
-
+@plugins.register
 class SpineNetBackbone:
-    def __init__(self, img_size, **kwargs):
+    def __init__(self, img_size, batch_size=None):
         self.img_size = img_size
         self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = 'spinenet-backbone'
         self._model = None
-        self.kwargs = kwargs
 
     def __call__(self):
         img_size = self.img_size

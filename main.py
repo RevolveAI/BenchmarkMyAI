@@ -4,7 +4,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Available arguments for models benchmarking')
 
 parser.add_argument('model', help='defines the model name to be executed for benchmark')
-parser.add_argument('img_size', type=int, nargs=2, help='image size as width height e.g 128 128')
+parser.add_argument('--img_size', default=[224, 224], type=int, nargs=2, help='image size as width height e.g 128 128')
 parser.add_argument('--batch_size', default=1, type=int, help='batch size for input data')
 parser.add_argument('--device', default='CPU:0', help='device on which model will evaluated e.g. CPU:0 or GPU:0')
 parser.add_argument('--wandb', default=False, type=bool, help='Optional: True if want to add all the results in wandb (weights and biases)')
@@ -21,7 +21,7 @@ if __name__=="__main__":
     print('*************************** Benchmark Results ***************************')
     benchmarks.update(benchmarks['benchmark'])
     _ = benchmarks.pop('benchmark')
-    benchmarks = [f'{key}: {val}' for key,val in benchmarks.items()]
+    benchmarks = [f'{key}: {val}' for key, val in benchmarks.items()]
     print('\n'.join(benchmarks))
 
 

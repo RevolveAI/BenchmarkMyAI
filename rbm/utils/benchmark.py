@@ -9,24 +9,24 @@ Created on Fri Jul 16 16:47:22 2021
 import tensorflow as tf
 import numpy as np
 import time
-import re
 from .. import models
-# from sys import exc_info
 import platform
 import cpuinfo
 import GPUtil
 import psutil
 from .wandb import WandB
-# import os
+
 
 class Benchmark:
-    def __init__(self, model, batch_size, img_size, device='CPU:0', **kwargs):
+
+    def __init__(self, model, batch_size=1, img_size=(224, 224), device='CPU:0', **kwargs):
         self.model = model
         self.batch_size = batch_size
         self.device = device
         self.img_size = img_size
         self.kwargs = kwargs
-    def memoryInfo(self):
+
+    def memory_info(self):
         memory_info = tf.config.experimental.get_memory_info(self.device)
         memory_used = dict()
         for _mt in memory_info:
@@ -34,23 +34,20 @@ class Benchmark:
             # print(_mt+' memory used:', round(memory_info[_mt]*1e-6, 2), 'MB')
         return memory_used
 
+    @staticmethod
+    def list_models():
+        return models.models_names()
+
     def load_model(self):
         if type(self.model) is str:
-            if re.match('(efficientdet){1}.*', self.model):
-                model = models.EfficientDet(self.model, self.batch_size)
+            exited_models = models.models_names()
+            if self.model in exited_models:
+                model = models.models(self.model, img_size=self.img_size, batch_size=self.batch_size, **self.kwargs)
                 model()
             else:
-                try:
-                    model = eval(f'models.{self.model}')
-                    model = model(img_size=self.img_size, **self.kwargs)
-                    model()
-                except AttributeError:
-                    try:
-                        model = models.KerasModels.load(self.model, self.img_size, **self.kwargs)
-                    except AttributeError:
-                        raise ValueError("invalid model name")
+                raise ValueError('invalid model name')
         else:
-            model = self.model(img_size=self.img_size, **self.kwargs)
+            model = self.model(img_size=self.img_size, batch_size=self.batch_size, **self.kwargs)
             model()
         return model
 
@@ -83,7 +80,7 @@ class Benchmark:
 
     def execute(self, wandb=False, project_name='benchmarks'):
         # if 'CPU' not in self.device:
-        #     _ = self.memoryInfo()
+        #     _ = self.memory_info()
         test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))
         model = self.load_model()
         try:
@@ -95,7 +92,7 @@ class Benchmark:
         benchmarks = self._calculate_benchmarks(model=model, inputs=test_batch_images)
         gpu_memory_used = ''
         if 'CPU' not in self.device:
-            memory_info = self.memoryInfo()
+            memory_info = self.memory_info()
             gpu_memory_used = memory_info['peak']
 
         def get_size(bytes, suffix="B"):

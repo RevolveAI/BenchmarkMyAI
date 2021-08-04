@@ -6,8 +6,15 @@ import tarfile
 import subprocess
 import tensorflow as tf
 import shutil
+from . import plugins
 
+
+@plugins.register
 class EfficientDet:
+    variants = ['efficientdet-d0', 'efficientdet-d1', 'efficientdet-d2',
+                'efficientdet-d3', 'efficientdet-d4', 'efficientdet-d5',
+                'efficientdet-d6', 'efficientdet-d7']
+
     def __init__(self, model_name, batch_size, img_size=None):
         self.model_name = model_name
         self.batch_size = batch_size
@@ -17,6 +24,7 @@ class EfficientDet:
         self._model_ = None
         self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = model_name
+
     def download_checkpoints(self):
         try:
             shutil.rmtree(self.export_dir)
@@ -31,6 +39,7 @@ class EfficientDet:
         os.remove(filename)
         ckpt_path = f'{self.export_dir}/{self.model_name}'
         self.ckpt_path = ckpt_path
+
     def export_model(self):
         os.makedirs(self.export_model_dir)
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/')
@@ -48,10 +57,12 @@ class EfficientDet:
         else:
             return [True]
         # result = stdout.decode("utf-8")
+
     def load_model(self):
         model = tf.saved_model.load(self.export_model_dir)
         model = model.signatures['serving_default']
         self._model_ = model
+
     def preprocess_images(self, input_images):
         images = input_images.copy()
         phi = int(self.model_name.split('-d')[1])
@@ -65,13 +76,19 @@ class EfficientDet:
             batches = images.shape[0]
         images.set_shape((batches, res, res, 3))
         return tf.cast(images, tf.uint8)
-    def predict(self, input_images):
-        return self._model_(input_images)
+
     def delete_tmp_dir(self):
         shutil.rmtree(self.export_dir)
+
     def __call__(self):
         self.download_checkpoints()
         _ = self.export_model()
         assert _[0], _[1]
         self.load_model()
         self.delete_tmp_dir()
+
+    def predict(self, input_images):
+        return self._model_(input_images)
+
+
+
