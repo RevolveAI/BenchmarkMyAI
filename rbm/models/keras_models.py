@@ -17,6 +17,7 @@ class KerasModels:
         self.img_size = img_size
         self.kwargs = kwargs
         self.__framework__ = 'TensorFlow ' + tf.__version__
+        self.__type__ = 'cv'
         self._model = None
 
     def __call__(self):

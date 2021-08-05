@@ -123,14 +123,18 @@ To calculate the benchmarks for your own custom model, your model should be in f
 
 ```python
 class ModelName:
-    def __init__(self, img_size, batch_size, **kwargs):
-        # img_size and batch_size are necessary args for any such class.
-        self.__framework__ = 'Framework 2.3.0' # Framework used for model
-        self.__name___ = 'model_name' # Name of model
+    def __init__(self, **kwargs):
+        self.__framework__ = 'Framework 2.3.0' # Required: Framework used for model
+        self.__name___ = 'model_name' # Optional: if class name not defining the model name, then optionaly pass the name of model
+        self.__type__ = 'cv' # Required: Type of model e.g. cv for computer vision, because data will be generated based on type.
     def __call__(self):
         # This method should build your model
+    def preprocess(self, inputs):
+        # This is an optional method, if data need to be preprocessed before predictions and not required to add into inference benchmarking.
+        return inputs
     def predict(self, inputs):
         # This method should predict the model output
+        return predictions
 ```
 
 There are two ways to execute your custom model.
@@ -138,15 +142,15 @@ There are two ways to execute your custom model.
 1. Pass the `ModelName` class instance as following
 
    ```python
-   benchmarker = rbm.utils.Benchmark(model=ModelName, batch_size=2, img_size=(224,224), device='CPU:0')
+   benchmarker = rbm.utils.Benchmark(model=ModelName, device='CPU:0')
    ```
 
-2. First, add your model under the directory `rbm/models` and assign `@plugins.register` decorator to`ModelName` class which you can import as `from ..utils import plugins`. 
+2. First, add your model under the directory `rbm/models` and assign `@plugins.register` decorator to`ModelName` class which you can import as `from rbm.utils import plugins`. 
 
    Then pass the model as following:
 
    ```python
-   benchmarker = rbm.utils.Benchmark(model='ModelName', batch_size=2, img_size=(224,224), device='CPU:0')
+   benchmarker = rbm.utils.Benchmark(model='ModelName', device='CPU:0')
    ```
    
    **Example:** Here is an example of building custom models:
@@ -155,15 +159,16 @@ There are two ways to execute your custom model.
    # rbm/models/test_model.py
    
    import tensorflow as tf
-   from ..utils import plugins
+   from rbm.utils import plugins
    
    @plugins.register
    class TestModel:
-       def __init__(self, img_size, batch_size=None):
+       def __init__(self, img_size):
            self.image_size = img_size
            self._model = None
            self.__framework__ = 'Tensorflow ' + tf.__version__
            self.__name__ = 'test-model'
+           self.__type__ = 'cv'
        def __call__(self):
            inputs = tf.keras.Input((128, 128, 3))
            outputs = tf.keras.layers.Conv2D(6, (1, 1))(inputs)
@@ -177,6 +182,7 @@ There are two ways to execute your custom model.
    
    ```python
    benchmarker = rbm.utils.Benchmark(model='TestModel', batch_size=2, img_size=(224,224), device='CPU:0')
+   # batch_size is added for cv type models to generate data for respective batch_size
    benchmarks = benchmarker.execute()
    ```
    

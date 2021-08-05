@@ -19,11 +19,9 @@ from .wandb import WandB
 
 class Benchmark:
 
-    def __init__(self, model, batch_size=1, img_size=(224, 224), device='CPU:0', **kwargs):
+    def __init__(self, model, device='CPU:0', **kwargs):
         self.model = model
-        self.batch_size = batch_size
         self.device = device
-        self.img_size = img_size
         self.kwargs = kwargs
 
     def memory_info(self):
@@ -42,14 +40,37 @@ class Benchmark:
         if type(self.model) is str:
             exited_models = models.models_names()
             if self.model in exited_models:
-                model = models.models(self.model, img_size=self.img_size, batch_size=self.batch_size, **self.kwargs)
+                model = models.models(self.model, **self.kwargs)
                 model()
             else:
                 raise ValueError('invalid model name')
         else:
-            model = self.model(img_size=self.img_size, batch_size=self.batch_size, **self.kwargs)
+            model = self.model(**self.kwargs)
             model()
         return model
+
+    def generate_data(self, model_type):
+        if model_type == 'cv':
+            data = np.random.uniform(size=(self.kwargs['batch_size'], *self.kwargs.get('img_size', (224, 224)), 3))
+        elif model_type == 'nlp:qa':
+            data = {
+                'context': "The US has passed the peak on new coronavirus cases, \
+                President Donald Trump said and predicted that some states would reopen this month.\
+                The US has over 637,000 confirmed Covid-19 cases and over 30,826 deaths, the highest for any \
+                country in the world.",
+                'question': "What was President Donald Trump's prediction?"
+            }
+        else:
+            data = None
+        return data
+
+    def _data_shape(self, data, model_type):
+        if model_type == 'cv':
+            shape = {'input_size': f'{data.shape[1]}x{data.shape[2]}',
+                     'batch_size': self.kwargs['batch_size']}
+        else:
+            shape = {}
+        return shape
 
     def _calculate_benchmarks(self, model, inputs):
         with tf.device(self.device):
@@ -64,7 +85,7 @@ class Benchmark:
                 time_list.append(infer)
             inference_time_batch = sum(time_list) / 10
             std_time = np.std(time_list)
-        throughput_time = inference_time_batch / self.batch_size
+        throughput_time = inference_time_batch / self.kwargs.get('batch_size', 1)
         return {
             'inference_time': inference_time_batch,
             'throughput_time': throughput_time,
@@ -79,17 +100,16 @@ class Benchmark:
         wandb_instance.close()
 
     def execute(self, wandb=False, project_name='benchmarks'):
-        # if 'CPU' not in self.device:
-        #     _ = self.memory_info()
-        test_batch_images = np.random.uniform(size=(self.batch_size, *self.img_size, 3))
+        if 'CPU' not in self.device:
+            _ = self.memory_info()
         model = self.load_model()
-        try:
-            test_batch_images = model.preprocess_images(test_batch_images)
-        except:
-            pass
+        model_type = model.__type__
+        data = self.generate_data(model_type=model_type)
+        if hasattr(model, 'preprocess'):
+            data = model.preprocess(data)
         framework = model.__framework__
         model_name = model.__name__
-        benchmarks = self._calculate_benchmarks(model=model, inputs=test_batch_images)
+        benchmarks = self._calculate_benchmarks(model=model, inputs=data)
         gpu_memory_used = ''
         if 'CPU' not in self.device:
             memory_info = self.memory_info()
@@ -103,8 +123,7 @@ class Benchmark:
                 bytes /= factor
         output = {
                 'model': model_name,
-                'input_size': f'{test_batch_images.shape[1]}x{test_batch_images.shape[2]}',
-                'batch_size': self.batch_size,
+                **self._data_shape(data=data, model_type=model_type),
                 'cpu': cpuinfo.get_cpu_info()['brand_raw'],
                 'gpus': ' | '.join([gpu.name for gpu in GPUtil.getGPUs()]) if 'CPU' not in self.device else '',
                 'memory': get_size(psutil.virtual_memory().total),

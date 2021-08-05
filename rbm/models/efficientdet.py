@@ -24,6 +24,7 @@ class EfficientDet:
         self._model_ = None
         self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = model_name
+        self.__type__ = 'cv'
 
     def download_checkpoints(self):
         try:
@@ -63,7 +64,7 @@ class EfficientDet:
         model = model.signatures['serving_default']
         self._model_ = model
 
-    def preprocess_images(self, input_images):
+    def preprocess(self, input_images):
         images = input_images.copy()
         phi = int(self.model_name.split('-d')[1])
         res = 512 + phi * 128

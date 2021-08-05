@@ -14,6 +14,7 @@ class InceptionUNet:
     def __init__(self, img_size, batch_size=None, channels=3,  n_labels=2, numFilters=32, output_mode="sigmoid"):
         self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = 'inception-unet'
+        self.__type__ = 'cv'
         self.img_size = img_size
         # self.channels = channels
         self.n_labels = n_labels

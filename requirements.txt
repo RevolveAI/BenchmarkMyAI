@@ -19,3 +19,6 @@ gputil
 opencv-python
 wandb
 wget
+torch
+transformers
+sentencepiece
