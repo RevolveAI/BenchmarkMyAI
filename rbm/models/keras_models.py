@@ -1,6 +1,6 @@
 
 import tensorflow as tf
-from . import plugins
+from ..utils import plugins
 
 
 @plugins.register

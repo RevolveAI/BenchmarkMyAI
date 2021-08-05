@@ -1,4 +1,4 @@
-# DeepLearning Models Benchmarks
+# Deep Learning Models Benchmarks
 
 A repository that contains code and benchmarks for commonly used models in RevolveAI.
 
@@ -29,8 +29,9 @@ Repository
 │   │   └── inception_unet.py
 │   ├── requirements.txt
 │   └── utils
-│       ├── benchmark.py
 │       ├── __init__.py
+│       ├── benchmark.py
+│       ├── plugins.py
 │       └── wandb.py
 └── README.md
 ```
@@ -61,6 +62,24 @@ benchmarks = benchmarker.execute()
 
 Output will be as following:
 
+```python
+{'model': 'resnet50',
+ 'input_size': '224x224',
+ 'batch_size': 2,
+ 'cpu': 'Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz',
+ 'gpus': '',
+ 'memory': '15.54GB',
+ 'os': '#71~20.04.1-Ubuntu SMP Thu Jul 15 17:46:08 UTC 2021',
+ 'python': '3.9.5',
+ 'framework': 'TensorFlow 2.5.0',
+ 'gpu_memory_used': '',
+ 'benchmark': {'inference_time': 246.02279029786587,
+  'throughput_time': 123.01139514893293,
+  'std': 6.702327991984426}}
+```
+
+
+
 ## List of Available Models
 
 * InceptionUNet
@@ -76,7 +95,9 @@ If you want to add all the benchmarks results in Weights and Biases (aka wandb),
 wandb login
 ```
 
-It will ask you to provide *api key*. Go to the [Authorize](https://wandb.ai/authorize) page to get *api key*. 
+Or you can login in interactive environment when you'll run `benchmarker.execute(wandb=True)`
+
+It will ask you to provide *API key*. Go to the [Authorize](https://wandb.ai/authorize) page to get *API key*. 
 
 Note: You should must have wandb account.
 
@@ -102,7 +123,8 @@ To calculate the benchmarks for your own custom model, your model should be in f
 
 ```python
 class ModelName:
-    def __init__(self, **kwargs):
+    def __init__(self, img_size, batch_size, **kwargs):
+        # img_size and batch_size are necessary args for any such class.
         self.__framework__ = 'Framework 2.3.0' # Framework used for model
         self.__name___ = 'model_name' # Name of model
     def __call__(self):
@@ -119,40 +141,44 @@ There are two ways to execute your custom model.
    benchmarker = rbm.utils.Benchmark(model=ModelName, batch_size=2, img_size=(224,224), device='CPU:0')
    ```
 
-2. First, add your model in `package/models` directory e.g. add `ModelName` class in the file `model_name.py`
-
-   Then edit `package/models/__init__.py` file and add new line at the end for your model as `from .model_name import ModelName`
+2. First, add your model under the directory `rbm/models` and assign `@plugins.register` decorator to`ModelName` class which you can import as `from ..utils import plugins`. 
 
    Then pass the model as following:
 
    ```python
    benchmarker = rbm.utils.Benchmark(model='ModelName', batch_size=2, img_size=(224,224), device='CPU:0')
    ```
-
-
-**Example:** Here is an example of building custom models:
-
-```python
-import tensorflow as tf
-class TestModel:
-    def __init__(self, img_size, **kwargs):
-        self.image_size = img_size
-        self._model = None
-        self.__framework__ = 'Tensorflow ' + tf.__version__
-        self.__name__ = 'test-model'
-    def __call__(self):
-        inputs = tf.keras.Input((128, 128, 3))
-        outputs = tf.keras.layers.Conv2D(6, (1, 1))(inputs)
-        model = tf.keras.Model(inputs, outputs)
-        self._model = model
-    def predict(self, inputs):
-        return self._model.predict(inputs)
-```
-
-Now we can execute this model benchmarks as:
-
-```python
-benchmarker = rbm.utils.Benchmark(model=TestModel, batch_size=2, img_size=(224,224), device='CPU:0')
-benchmarks = benchmarker.execute()
-```
+   
+   **Example:** Here is an example of building custom models:
+   
+   ```python
+   # rbm/models/test_model.py
+   
+   import tensorflow as tf
+   from ..utils import plugins
+   
+   @plugins.register
+   class TestModel:
+       def __init__(self, img_size, batch_size=None):
+           self.image_size = img_size
+           self._model = None
+           self.__framework__ = 'Tensorflow ' + tf.__version__
+           self.__name__ = 'test-model'
+       def __call__(self):
+           inputs = tf.keras.Input((128, 128, 3))
+           outputs = tf.keras.layers.Conv2D(6, (1, 1))(inputs)
+           model = tf.keras.Model(inputs, outputs)
+           self._model = model
+       def predict(self, inputs):
+           return self._model.predict(inputs)
+   ```
+   
+   Now we can execute this model benchmarks as:
+   
+   ```python
+   benchmarker = rbm.utils.Benchmark(model='TestModel', batch_size=2, img_size=(224,224), device='CPU:0')
+   benchmarks = benchmarker.execute()
+   ```
+   
+   
 

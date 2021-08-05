@@ -6,7 +6,7 @@ import tarfile
 import subprocess
 import tensorflow as tf
 import shutil
-from . import plugins
+from ..utils import plugins
 
 
 @plugins.register

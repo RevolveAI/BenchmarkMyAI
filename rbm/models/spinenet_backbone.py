@@ -3,7 +3,8 @@
 #%%
 import tensorflow as tf
 from official.vision.beta.modeling.backbones.spinenet import SpineNet as spineNet
-from . import plugins
+from ..utils import plugins
+
 
 @plugins.register
 class SpineNetBackbone:

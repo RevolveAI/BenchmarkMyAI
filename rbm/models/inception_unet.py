@@ -6,7 +6,8 @@ from tensorflow.keras import Input
 from tensorflow.keras.layers import Conv2D as Convolution2D
 from tensorflow.keras.layers import Activation, BatchNormalization, MaxPooling2D, concatenate
 from tensorflow.keras.layers import UpSampling2D
-from . import plugins
+from ..utils import plugins
+
 
 @plugins.register
 class InceptionUNet:
