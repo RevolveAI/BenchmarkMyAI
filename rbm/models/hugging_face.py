@@ -15,7 +15,7 @@ class HuggingFace:
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, return_token_type_ids=True)
         self._model = None
         self._inputs = None
-        self.__framework__ = 'HuggingFace Transformers ' + transformers.__version__
+        self.__framework__ = 'Pytorch ' + torch.__version__ + 'HuggingFace Transformers ' + transformers.__version__
         self.__name__ = model_name
         self.__type__ = model_type
 
