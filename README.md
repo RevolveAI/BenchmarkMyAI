@@ -123,8 +123,9 @@ To calculate the benchmarks for your own custom model, your model should be in f
 
 ```python
 class ModelName:
-    def __init__(self, **kwargs):
-        self.__framework__ = 'Framework 2.3.0' # Required: Framework used for model
+    def __init__(self, device='cuda:0', **kwargs):
+        self.device = device # device argument is necessary if model framework is pytorch, else no need 
+        self.__framework__ = 'Framework 2.3.0' # Required: Fullname of framework used for model
         self.__name___ = 'model_name' # Optional: if class name not defining the model name, then optionaly pass the name of model
         self.__type__ = 'cv' # Required: Type of model e.g. cv for computer vision, because data will be generated based on type.
     def __call__(self):

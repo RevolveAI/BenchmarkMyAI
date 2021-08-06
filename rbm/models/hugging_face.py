@@ -8,9 +8,10 @@ from rbm.utils import plugins
 
 class HuggingFace:
 
-    def __init__(self, model_name, model_type, **kwargs):
+    def __init__(self, model_name, model_type, device='cpu:0', **kwargs):
         self.model_name = model_name
         self.kwargs = kwargs
+        self.device = device
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, return_token_type_ids=True)
         self._model = None
         self._inputs = None
@@ -19,16 +20,14 @@ class HuggingFace:
         self.__type__ = model_type
 
     def _preprocess(self, inputs):
-        inputs = self._tokenizer(inputs['question'], inputs['context'], return_tensors='pt')
+        inputs = self._tokenizer(inputs['question'], inputs['context'], return_tensors='pt').to(self.device)
         self._inputs = inputs
-        start_positions = torch.tensor([1])
-        end_positions = torch.tensor([3])
+        start_positions = torch.tensor([1]).to(self.device)
+        end_positions = torch.tensor([3]).to(self.device)
         return {**inputs,
                 'start_positions': start_positions,
                 'end_positions': end_positions}
 
-    def __call__(self):
-        self._model = AutoModelForQuestionAnswering.from_pretrained(self.model_name)
 
     def predict(self, inputs):
         inputs = inputs.copy()
@@ -54,5 +53,8 @@ class HuggingFaceQA(HuggingFace):
     
     def __init__(self, model_name, **kwargs):
         super().__init__(model_name=model_name, model_type='nlp:qa', **kwargs)
+
+    def __call__(self):
+        self._model = AutoModelForQuestionAnswering.from_pretrained(self.model_name).to(self.device)
 
 

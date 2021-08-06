@@ -15,6 +15,8 @@ import cpuinfo
 import GPUtil
 import psutil
 from .wandb import WandB
+import torch
+from contextlib import contextmanager
 
 
 class Benchmark:
@@ -24,13 +26,15 @@ class Benchmark:
         self.device = device
         self.kwargs = kwargs
 
+
     def memory_info(self):
-        memory_info = tf.config.experimental.get_memory_info(self.device)
-        memory_used = dict()
-        for _mt in memory_info:
-            memory_used.update({_mt: str(round(memory_info[_mt]*1e-6, 2))+'MB'})
-            # print(_mt+' memory used:', round(memory_info[_mt]*1e-6, 2), 'MB')
-        return memory_used
+        if 'cuda' in self.device:
+            memory_used = torch.cuda.memory_allocated(self.device)
+        elif 'GPU' in self.device:
+            memory_used = tf.config.experimental.get_memory_info(self.device)['peak']
+        else:
+            memory_used = ''
+        return str(round(memory_used * 1e-6, 2)) + 'MB'
 
     @staticmethod
     def list_models():
@@ -72,8 +76,29 @@ class Benchmark:
             shape = {}
         return shape
 
+    @contextmanager
+    def device_placement(self, framework):
+        """
+        Context Manager allowing tensor allocation on the user-specified device in framework agnostic way.
+        Returns:
+            Context manager
+        Examples::
+            # Explicitly ask for tensor allocation on CUDA device :0
+            pipe = pipeline(..., device=0)
+            with pipe.device_placement():
+                # Every framework specific tensor allocation will be done on the request device
+                output = pipe(...)
+        """
+        if 'tensorflow' in framework:
+            with tf.device(self.device):
+                yield
+        else:
+            if 'torch' in framework:
+                self.kwargs['device'] = torch.device(self.device)
+            yield
+
     def _calculate_benchmarks(self, model, inputs):
-        with tf.device(self.device):
+        with self.device_placement(model.__framework__):
             for _ in range(5):
                 model.predict(inputs)
             time_list = []
@@ -100,20 +125,18 @@ class Benchmark:
         wandb_instance.close()
 
     def execute(self, wandb=False, project_name='benchmarks'):
-        if 'CPU' not in self.device:
-            _ = self.memory_info()
+        _ = self.memory_info()
         model = self.load_model()
         model_type = model.__type__
+        framework = model.__framework__
+        model_name = model.__name__
+        if 'torch' in framework:
+            self.device = self.device.lower().replace('gpu', 'cuda')
         data = self.generate_data(model_type=model_type)
         if hasattr(model, 'preprocess'):
             data = model.preprocess(data)
-        framework = model.__framework__
-        model_name = model.__name__
         benchmarks = self._calculate_benchmarks(model=model, inputs=data)
-        gpu_memory_used = ''
-        if 'CPU' not in self.device:
-            memory_info = self.memory_info()
-            gpu_memory_used = memory_info['peak']
+        gpu_memory_used = self.memory_info()
 
         def get_size(bytes, suffix="B"):
             factor = 1024
