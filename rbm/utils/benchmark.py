@@ -34,7 +34,9 @@ class Benchmark:
             memory_used = tf.config.experimental.get_memory_info(self.device)['peak']
         else:
             memory_used = ''
-        return str(round(memory_used * 1e-6, 2)) + 'MB'
+        if memory_used != ''
+            memory_used = str(round(memory_used * 1e-6, 2)) + 'MB'
+        return memory_used
 
     @staticmethod
     def list_models():
