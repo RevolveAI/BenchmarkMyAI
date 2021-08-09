@@ -3,3 +3,5 @@ wandb
 __pycache__/
 .idea/
 archived
+*.tmp
+tmp/

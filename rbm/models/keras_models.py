@@ -12,7 +12,7 @@ class KerasModels:
                 'NASNetLarge', 'NASNetMobile', 'ResNet101', 'ResNet101V2', 'ResNet152', 'ResNet152V2',
                 'ResNet50', 'ResNet50V2', 'VGG16', 'VGG19', 'Xception']
 
-    def __init__(self, model_name, img_size, batch_size=None, **kwargs):
+    def __init__(self, model_name, img_size=(224, 224), batch_size=None, **kwargs):
         self.model_name = model_name
         self.img_size = img_size
         self.kwargs = kwargs

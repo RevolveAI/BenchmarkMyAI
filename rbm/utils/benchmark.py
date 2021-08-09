@@ -58,9 +58,9 @@ class Benchmark:
             model()
         return model
 
-    def generate_data(self, model_type):
+    def generate_data(self, model_type, **kwargs):
         if model_type == 'cv':
-            data = np.random.uniform(size=(self.kwargs.get('batch_size', 1), *self.kwargs.get('img_size', (224, 224)), 3))
+            data = np.random.uniform(size=(self.kwargs.get('batch_size', 1), *kwargs.get('img_size', (224, 224)), 3))
         elif model_type == 'nlp:qa':
             data = {
                 'context': ["The US has passed the peak on new coronavirus cases, \
@@ -74,11 +74,9 @@ country in the world."]*self.kwargs.get('batch_size', 1),
         return data
 
     def _data_shape(self, data, model_type):
+        shape = {'batch_size': self.kwargs.get('batch_size', 1)}
         if model_type == 'cv':
-            shape = {'input_size': f'{data.shape[1]}x{data.shape[2]}',
-                     'batch_size': self.kwargs['batch_size']}
-        else:
-            shape = {}
+            shape = shape.update({'input_size': f'{data.shape[1]}x{data.shape[2]}'})
         return shape
 
     @contextmanager
@@ -122,7 +120,10 @@ country in the world."]*self.kwargs.get('batch_size', 1),
         model_type = model.__type__
         framework = model.__framework__
         model_name = model.__name__
-        data = self.generate_data(model_type=model_type)
+        dg_kwargs = {}
+        if hasattr(model, 'img_size'):
+            dg_kwargs = {'img_size': model.img_size}
+        data = self.generate_data(model_type=model_type, **dg_kwargs)
         if hasattr(model, 'preprocess'):
             data = model.preprocess(data)
         benchmarks = self._calculate_benchmarks(model=model, inputs=data)

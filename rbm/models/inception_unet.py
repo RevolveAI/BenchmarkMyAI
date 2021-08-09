@@ -11,7 +11,7 @@ from ..utils import plugins
 
 @plugins.register
 class InceptionUNet:
-    def __init__(self, img_size, batch_size=None, channels=3,  n_labels=2, numFilters=32, output_mode="sigmoid"):
+    def __init__(self, img_size=(224, 224), batch_size=None, channels=3,  n_labels=2, numFilters=32, output_mode="sigmoid"):
         self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = 'inception-unet'
         self.__type__ = 'cv'

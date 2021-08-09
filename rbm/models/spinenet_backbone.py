@@ -8,7 +8,7 @@ from ..utils import plugins
 
 @plugins.register
 class SpineNetBackbone:
-    def __init__(self, img_size, batch_size=None):
+    def __init__(self, img_size=(128, 128), batch_size=None):
         self.img_size = img_size
         self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = 'spinenet-backbone'

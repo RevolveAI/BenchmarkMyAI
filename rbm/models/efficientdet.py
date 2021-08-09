@@ -15,7 +15,7 @@ class EfficientDet:
                 'efficientdet-d3', 'efficientdet-d4', 'efficientdet-d5',
                 'efficientdet-d6', 'efficientdet-d7']
 
-    def __init__(self, model_name, batch_size, img_size=None):
+    def __init__(self, model_name, batch_size, img_size=(224, 224)):
         self.model_name = model_name
         self.batch_size = batch_size
         self.img_size = img_size
