@@ -81,7 +81,7 @@ class Benchmark:
         return shape
 
     def device_placement(self, framework):
-        if 'tensorflow' in framework:
+        if 'tensorflow' in framework.lower():
             device = tf.device(self.device)
         else:
             class NoDevice:
