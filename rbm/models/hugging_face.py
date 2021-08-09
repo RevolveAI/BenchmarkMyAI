@@ -25,16 +25,11 @@ class HuggingFace:
         # start_positions = torch.tensor([1]).to(self.device)
         # end_positions = torch.tensor([3]).to(self.device)
         return inputs
-                # 'start_positions': start_positions,
-                # 'end_positions': end_positions
-
 
     def predict(self, inputs):
         inputs = inputs.copy()
         inputs = self._preprocess(inputs=inputs)
-        # start_positions = inputs.pop('start_positions')
-        # end_positions = inputs.pop('end_positions')
-        preds = self._model(**inputs, **self.kwargs) # , start_positions=start_positions, end_positions=end_positions
+        preds = self._model(**inputs, **self.kwargs)  # , start_positions=start_positions, end_positions=end_positions
         answer = self._postprocess(preds)
         return answer
 
@@ -51,11 +46,13 @@ class HuggingFace:
             answer_tokens.append(ids_tokens[torch.argmax(start_scores[i]): torch.argmax(end_scores[i]) + 1])
             answers.append(self._tokenizer.convert_tokens_to_string(answer_tokens[i]))
         return answers
-    
+
+
 @plugins.register
 class HuggingFaceQA(HuggingFace):
     variants = ['PremalMatalia/albert-base-best-squad2', 'elgeish/cs224n-squad2.0-albert-base-v2',
-                'madlag/albert-base-v2-squad', 'twmkn9/albert-base-v2-squad2']
+                'madlag/albert-base-v2-squad', 'twmkn9/albert-base-v2-squad2',
+                'twmkn9/distilbert-base-uncased-squad2', 'distilbert-base-uncased-distilled-squad']
     
     def __init__(self, model_name, **kwargs):
         super().__init__(model_name=model_name, model_type='nlp:qa', **kwargs)
