@@ -47,6 +47,9 @@ class Benchmark:
             exited_models = models.models_names()
             if self.model in exited_models:
                 model = models.models(self.model, **self.kwargs)
+                if 'torch' in model.__framework__:
+                    self.device = self.device.lower().replace('gpu', 'cuda')
+                    model.device = torch.device(self.device)
                 model()
             else:
                 raise ValueError('invalid model name')
@@ -95,8 +98,6 @@ class Benchmark:
             with tf.device(self.device):
                 yield
         else:
-            if 'torch' in framework:
-                self.kwargs['device'] = torch.device(self.device)
             yield
 
     def _calculate_benchmarks(self, model, inputs):
@@ -132,8 +133,6 @@ class Benchmark:
         model_type = model.__type__
         framework = model.__framework__
         model_name = model.__name__
-        if 'torch' in framework:
-            self.device = self.device.lower().replace('gpu', 'cuda')
         data = self.generate_data(model_type=model_type)
         if hasattr(model, 'preprocess'):
             data = model.preprocess(data)
@@ -161,3 +160,5 @@ class Benchmark:
         if wandb:
             self._wandb(project_name=project_name, model_name=model_name, output=output)
         return output
+
+

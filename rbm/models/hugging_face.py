@@ -15,7 +15,7 @@ class HuggingFace:
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, return_token_type_ids=True)
         self._model = None
         self._inputs = None
-        self.__framework__ = 'Pytorch ' + torch.__version__ + 'HuggingFace Transformers ' + transformers.__version__
+        self.__framework__ = 'Pytorch ' + torch.__version__ + ' | HuggingFace Transformers ' + transformers.__version__
         self.__name__ = model_name
         self.__type__ = model_type
 
@@ -41,7 +41,7 @@ class HuggingFace:
     def _postprocess(self, outputs):
         start_scores = outputs.start_logits
         end_scores = outputs.end_logits
-        ids_tokens = self._tokenizer.convert_ids_to_tokens(self._inputs['input_ids'].numpy()[0])
+        ids_tokens = self._tokenizer.convert_ids_to_tokens(self._inputs['input_ids'].cpu().numpy()[0])
         answer_tokens = ids_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
         answer = self._tokenizer.convert_tokens_to_string(answer_tokens)
         return answer
