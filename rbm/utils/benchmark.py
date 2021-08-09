@@ -16,6 +16,7 @@ import GPUtil
 import psutil
 from .wandb import WandB
 import torch
+from contextlib import contextmanager
 
 
 class Benchmark:
@@ -80,19 +81,13 @@ class Benchmark:
             shape = {}
         return shape
 
+    @contextmanager
     def device_placement(self, framework):
         if 'tensorflow' in framework.lower():
-            device = tf.device(self.device)
+            with tf.device(self.device):
+                yield
         else:
-            class NoDevice:
-                def __init__(self, *args, **kwargs):
-                    pass
-                def __enter__(self, *args, **kwargs):
-                    pass
-                def __exit__(self, *args, **kwargs):
-                    pass
-            device = NoDevice()
-        return device
+            yield
 
     def _calculate_benchmarks(self, model, inputs):
         with self.device_placement(model.__framework__):
