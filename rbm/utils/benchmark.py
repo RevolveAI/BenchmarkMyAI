@@ -69,6 +69,8 @@ The US has over 637,000 confirmed Covid-19 cases and over 30,826 deaths, the hig
 country in the world."]*self.kwargs.get('batch_size', 1),
                 'question': ["What was President Donald Trump's prediction?"]*self.kwargs.get('batch_size', 1)
             }
+        elif model_type == 'nlp:ner':
+            data = ['Old MacDonald had a farm']*self.kwargs.get('batch_size', 1)
         else:
             data = None
         return data

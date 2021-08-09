@@ -22,3 +22,5 @@ wget
 torch
 transformers
 sentencepiece
+NERDA
+nltk
