@@ -76,7 +76,7 @@ country in the world."]*self.kwargs.get('batch_size', 1),
     def _data_shape(self, data, model_type):
         shape = {'batch_size': self.kwargs.get('batch_size', 1)}
         if model_type == 'cv':
-            shape = shape.update({'input_size': f'{data.shape[1]}x{data.shape[2]}'})
+            shape.update({'input_size': f'{data.shape[1]}x{data.shape[2]}'})
         return shape
 
     @contextmanager
