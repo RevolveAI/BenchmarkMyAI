@@ -16,7 +16,6 @@ import GPUtil
 import psutil
 from .wandb import WandB
 import torch
-from contextlib import contextmanager
 
 
 class Benchmark:
@@ -81,24 +80,19 @@ class Benchmark:
             shape = {}
         return shape
 
-    @contextmanager
     def device_placement(self, framework):
-        """
-        Context Manager allowing tensor allocation on the user-specified device in framework agnostic way.
-        Returns:
-            Context manager
-        Examples::
-            # Explicitly ask for tensor allocation on CUDA device :0
-            pipe = pipeline(..., device=0)
-            with pipe.device_placement():
-                # Every framework specific tensor allocation will be done on the request device
-                output = pipe(...)
-        """
         if 'tensorflow' in framework:
-            with tf.device(self.device):
-                yield
+            device = tf.device(self.device)
         else:
-            yield
+            class NoDevice:
+                def __init__(self, *args, **kwargs):
+                    pass
+                def __enter__(self, *args, **kwargs):
+                    pass
+                def __exit__(self, *args, **kwargs):
+                    pass
+            device = NoDevice()
+        return device
 
     def _calculate_benchmarks(self, model, inputs):
         with self.device_placement(model.__framework__):
