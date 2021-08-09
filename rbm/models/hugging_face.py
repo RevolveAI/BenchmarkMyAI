@@ -8,7 +8,7 @@ from rbm.utils import plugins
 
 class HuggingFace:
 
-    def __init__(self, model_name, model_type, device='cpu:0', **kwargs):
+    def __init__(self, model_name, model_type, device='cpu:0', batch_size=None, **kwargs):
         self.model_name = model_name
         self.kwargs = kwargs
         self.device = device
@@ -22,29 +22,35 @@ class HuggingFace:
     def _preprocess(self, inputs):
         inputs = self._tokenizer(inputs['question'], inputs['context'], return_tensors='pt').to(self.device)
         self._inputs = inputs
-        start_positions = torch.tensor([1]).to(self.device)
-        end_positions = torch.tensor([3]).to(self.device)
-        return {**inputs,
-                'start_positions': start_positions,
-                'end_positions': end_positions}
+        # start_positions = torch.tensor([1]).to(self.device)
+        # end_positions = torch.tensor([3]).to(self.device)
+        return inputs
+                # 'start_positions': start_positions,
+                # 'end_positions': end_positions
 
 
     def predict(self, inputs):
         inputs = inputs.copy()
         inputs = self._preprocess(inputs=inputs)
-        start_positions = inputs.pop('start_positions')
-        end_positions = inputs.pop('end_positions')
-        preds = self._model(**inputs, start_positions=start_positions, end_positions=end_positions, **self.kwargs)
+        # start_positions = inputs.pop('start_positions')
+        # end_positions = inputs.pop('end_positions')
+        preds = self._model(**inputs, **self.kwargs) # , start_positions=start_positions, end_positions=end_positions
         answer = self._postprocess(preds)
         return answer
 
     def _postprocess(self, outputs):
         start_scores = outputs.start_logits
         end_scores = outputs.end_logits
-        ids_tokens = self._tokenizer.convert_ids_to_tokens(self._inputs['input_ids'].cpu().numpy()[0])
-        answer_tokens = ids_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
-        answer = self._tokenizer.convert_tokens_to_string(answer_tokens)
-        return answer
+        # ids_tokens = self._tokenizer.convert_ids_to_tokens(self._inputs['input_ids'].cpu().numpy()[0])
+        # answer_tokens = ids_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
+        # answer = self._tokenizer.convert_tokens_to_string(answer_tokens)
+        answer_tokens = list()
+        answers = list()
+        for i in range(len(start_scores)):
+            ids_tokens = self._tokenizer.convert_ids_to_tokens(self._inputs['input_ids'].cpu().numpy()[i])
+            answer_tokens.append(ids_tokens[torch.argmax(start_scores[i]): torch.argmax(end_scores[i]) + 1])
+            answers.append(self._tokenizer.convert_tokens_to_string(answer_tokens[i]))
+        return answers
     
 @plugins.register
 class HuggingFaceQA(HuggingFace):

@@ -60,14 +60,14 @@ class Benchmark:
 
     def generate_data(self, model_type):
         if model_type == 'cv':
-            data = np.random.uniform(size=(self.kwargs['batch_size'], *self.kwargs.get('img_size', (224, 224)), 3))
+            data = np.random.uniform(size=(self.kwargs.get('batch_size', 1), *self.kwargs.get('img_size', (224, 224)), 3))
         elif model_type == 'nlp:qa':
             data = {
-                'context': "The US has passed the peak on new coronavirus cases, \
-                President Donald Trump said and predicted that some states would reopen this month.\
-                The US has over 637,000 confirmed Covid-19 cases and over 30,826 deaths, the highest for any \
-                country in the world.",
-                'question': "What was President Donald Trump's prediction?"
+                'context': ["The US has passed the peak on new coronavirus cases, \
+President Donald Trump said and predicted that some states would reopen this month.\
+The US has over 637,000 confirmed Covid-19 cases and over 30,826 deaths, the highest for any \
+country in the world."]*self.kwargs.get('batch_size', 1),
+                'question': ["What was President Donald Trump's prediction?"]*self.kwargs.get('batch_size', 1)
             }
         else:
             data = None
