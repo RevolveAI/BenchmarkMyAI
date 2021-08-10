@@ -110,7 +110,7 @@ country in the world."]*self.kwargs.get('batch_size', 1),
         }
 
     def _wandb(self, project_name, model_name, output):
-        run_name = f"{model_name} {output['input_size']} {self.batch_size}"
+        run_name = f"{model_name} {output.get('input_size', '')} {output.get('batch_size', '')}"
         wandb_instance = WandB(project_name=project_name, run_name=run_name)
         wandb_instance.init()
         wandb_instance.plot_and_table(benchmarks=output)
