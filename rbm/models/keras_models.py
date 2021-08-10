@@ -23,7 +23,8 @@ class KerasModels:
     def __call__(self):
         model = eval('tf.keras.applications.' + self.model_name)
         include_top = self.kwargs.pop('include_top', False)
-        model = model(input_shape=(*self.img_size, 3), include_top=include_top, **self.kwargs)
+        weights = self.kwargs.pop('weights', None)
+        model = model(input_shape=(*self.img_size, 3), include_top=include_top, weights=weights, **self.kwargs)
         self.__name__ = model.get_config()['name']
         self._model = model
 
