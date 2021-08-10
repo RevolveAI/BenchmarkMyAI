@@ -47,7 +47,7 @@ class Benchmark:
             exited_models = models.models_names()
             if self.model in exited_models:
                 model = models.models(self.model, **self.kwargs)
-                if 'torch' in model.__framework__:
+                if 'torch' in model.__framework__.lower():
                     self.device = self.device.lower().replace('gpu', 'cuda')
                     model.device = torch.device(self.device)
                 model()
