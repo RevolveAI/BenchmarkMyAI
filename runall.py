@@ -7,6 +7,9 @@ parser.add_argument('--batch_size', default=1, type=int, help='batch size for in
 parser.add_argument('--device', default='CPU:0', help='device on which model will evaluated e.g. CPU:0 or GPU:0')
 parser.add_argument('--wandb', default=False, type=bool, help='Optional: True if want to add all the results in wandb (weights and biases)')
 parser.add_argument('--project_name', default='benchmarks', help='optional name for wandb project')
+parser.add_argument('--runonly', default=[], nargs='+')
+parser.add_argument('--runexcept', default=[], nargs='+')
+
 
 args = parser.parse_args()
 
@@ -17,7 +20,12 @@ def runAll():
     stars_length = 25
     h_sep = '='
     v_sep = '|'
-    model_names = rbm.models.models_names()
+    if len(args.runonly) > 0:
+        model_names = args.runonly
+    else:
+        model_names = rbm.models.models_names()
+        if len(args.runexcept) > 0:
+            model_names = list(np.setdiff1d(model_names, args.runexcept))
     for model in model_names:
         try:
             benchmarker = rbm.utils.Benchmark(model=model, batch_size=args.batch_size, device=args.device)
