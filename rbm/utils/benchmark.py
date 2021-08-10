@@ -63,14 +63,16 @@ class Benchmark:
             data = np.random.uniform(size=(self.kwargs.get('batch_size', 1), *kwargs.get('img_size', (224, 224)), 3))
         elif model_type == 'nlp:qa':
             data = {
+                'question': ["What was President Donald Trump's prediction?"]*self.kwargs.get('batch_size', 1),
                 'context': ["The US has passed the peak on new coronavirus cases, \
 President Donald Trump said and predicted that some states would reopen this month.\
 The US has over 637,000 confirmed Covid-19 cases and over 30,826 deaths, the highest for any \
-country in the world."]*self.kwargs.get('batch_size', 1),
-                'question': ["What was President Donald Trump's prediction?"]*self.kwargs.get('batch_size', 1)
+country in the world."]*self.kwargs.get('batch_size', 1)
             }
         elif model_type == 'nlp:ner':
             data = ['Old MacDonald had a farm']*self.kwargs.get('batch_size', 1)
+        elif model_type == 'nlp:tc':
+            data = [['It seems to me that I can make everything impossible to possible']*self.kwargs.get('batch_size', 1)]
         else:
             data = None
         return data
@@ -139,6 +141,7 @@ country in the world."]*self.kwargs.get('batch_size', 1),
                 bytes /= factor
         output = {
                 'model': model_name,
+                'type': model_type.upper(),
                 **self._data_shape(data=data, model_type=model_type),
                 'cpu': cpuinfo.get_cpu_info()['brand_raw'],
                 'gpus': ' | '.join([gpu.name for gpu in GPUtil.getGPUs()]) if 'CPU' not in self.device else '',

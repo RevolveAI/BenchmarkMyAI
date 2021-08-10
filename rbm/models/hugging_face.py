@@ -1,7 +1,7 @@
 
 
 import transformers
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 import torch
 from rbm.utils import plugins
 
@@ -20,10 +20,10 @@ class HuggingFace:
         self.__type__ = model_type
 
     def _preprocess(self, inputs):
-        inputs = self._tokenizer(inputs['question'], inputs['context'], return_tensors='pt').to(self.device)
+        if type(inputs) is dict:
+            inputs = list(inputs.values())
+        inputs = self._tokenizer(*inputs, return_tensors='pt', padding=True).to(self.device)
         self._inputs = inputs
-        # start_positions = torch.tensor([1]).to(self.device)
-        # end_positions = torch.tensor([3]).to(self.device)
         return inputs
 
     def predict(self, inputs):
@@ -36,9 +36,6 @@ class HuggingFace:
     def _postprocess(self, outputs):
         start_scores = outputs.start_logits
         end_scores = outputs.end_logits
-        # ids_tokens = self._tokenizer.convert_ids_to_tokens(self._inputs['input_ids'].cpu().numpy()[0])
-        # answer_tokens = ids_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
-        # answer = self._tokenizer.convert_tokens_to_string(answer_tokens)
         answer_tokens = list()
         answers = list()
         for i in range(len(start_scores)):
@@ -59,5 +56,22 @@ class HuggingFaceQA(HuggingFace):
 
     def __call__(self):
         self._model = AutoModelForQuestionAnswering.from_pretrained(self.model_name).to(self.device)
+
+
+@plugins.register
+class HuggingFaceTC(HuggingFace):
+    variants = ['distilbert-base-uncased-finetuned-sst-2-english', 'textattack/bert-base-uncased-imdb']
+
+    def __init__(self, model_name, **kwargs):
+        super().__init__(model_name=model_name, model_type='nlp:tc', **kwargs)
+
+    def __call__(self):
+        self._model = AutoModelForSequenceClassification.from_pretrained(self.model_name).to(self.device)
+
+    def _postprocess(self, outputs):
+        return outputs[0].softmax(1)
+
+
+
 
 
