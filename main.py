@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(description='Available arguments for models ben
 parser.add_argument('model', help='defines the model name to be executed for benchmark')
 # parser.add_argument('--img_size', default=[224, 224], type=int, nargs=2, help='image size as width height e.g 128 128')
 parser.add_argument('--batch_size', default=1, type=int, help='batch size for input data')
-parser.add_argument('--device', default='CPU:0', help='device on which model will evaluated e.g. CPU:0 or GPU:0')
+parser.add_argument('--device', default=None, help='device on which model will evaluated e.g. CPU:0 or GPU:0 default is prefered device GPU>CPU')
 parser.add_argument('--wandb', default=False, type=bool, help='Optional: True if want to add all the results in wandb (weights and biases)')
 parser.add_argument('--project_name', default='benchmarks', help='optional name for wandb project')
 parser.add_argument('--optional', default=None,  nargs='+', type=str, help='Pass all the optional arguments here')

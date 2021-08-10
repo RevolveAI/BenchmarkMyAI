@@ -4,11 +4,11 @@ import argparse
 parser = argparse.ArgumentParser(description='Available arguments for models benchmarking')
 
 parser.add_argument('--batch_size', default=1, type=int, help='batch size for input data')
-parser.add_argument('--device', default='CPU:0', help='device on which model will evaluated e.g. CPU:0 or GPU:0')
+parser.add_argument('--device', default=None, help='device on which model will evaluated e.g. CPU:0 or GPU:0 default is prefered device GPU>CPU')
 parser.add_argument('--wandb', default=False, type=bool, help='Optional: True if want to add all the results in wandb (weights and biases)')
 parser.add_argument('--project_name', default='benchmarks', help='optional name for wandb project')
-parser.add_argument('--runonly', default=[], nargs='+')
-parser.add_argument('--runexcept', default=[], nargs='+')
+parser.add_argument('--runonly', default=[], nargs='+', help='will only execute benchmarks for the models listed in this argument')
+parser.add_argument('--runexcept', default=[], nargs='+', help='will execute benchmarks for the models except listed in this argument')
 
 
 args = parser.parse_args()
@@ -34,6 +34,7 @@ def runAll():
             raise KeyboardInterrupt('KeyboardInterrupt')
             break
         except:
+            print()
             head = h_sep*stars_length + ' Benchmark Error ' + h_sep*stars_length
             print(head)
             _p_model = v_sep + ' model:' + model
@@ -41,6 +42,7 @@ def runAll():
             _p_error = f"{v_sep} Error: {exc_info()[0]} {exc_info()[1]}"
             print(_p_error + ' '*(len(head)-len(_p_error)-1) + v_sep)
         else:
+            print()
             head = h_sep*stars_length + ' Benchmark Results ' + h_sep*stars_length
             print(head)
             benchmarks.update(benchmarks['benchmark'])
@@ -52,6 +54,7 @@ def runAll():
             print('\n'.join(ls))
         foot = h_sep*len(head)
         print(foot)
+        print()
 
 
 if __name__ == "__main__":

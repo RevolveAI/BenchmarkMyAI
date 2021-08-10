@@ -21,9 +21,15 @@ from contextlib import contextmanager
 
 class Benchmark:
 
-    def __init__(self, model, device='CPU:0', **kwargs):
+    def __init__(self, model, device=None, **kwargs):
         self.model = model
-        self.device = device
+        if device is None:
+            if len(tf.config.list_physical_devices(device_type='GPU')) > 0:
+                self.device = tf.config.list_physical_devices(device_type='GPU')[0].name.split('/physical_device:')[1]
+            else:
+                self.device = tf.config.list_physical_devices(device_type='CPU')[0].name.split('/physical_device:')[1]
+        else:
+            self.device = device
         self.kwargs = kwargs
 
 
