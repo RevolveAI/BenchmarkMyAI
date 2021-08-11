@@ -22,6 +22,7 @@ class TensorflowBackend:
     def memory_info(self):
         if 'GPU' in self.device:
             peak_memory_used = tf.config.experimental.get_memory_info(self.device)['peak']
+            peak_memory_used = str(round(peak_memory_used * 1e-6, 2)) + 'MB'
         else:
             peak_memory_used = ''
         return peak_memory_used

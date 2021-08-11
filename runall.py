@@ -10,10 +10,10 @@ parser.add_argument('--project_name', default='benchmarks', help='optional name 
 parser.add_argument('--runonly', default=[], nargs='+', help='will only execute benchmarks for the models listed in this argument')
 parser.add_argument('--runexcept', default=[], nargs='+', help='will execute benchmarks for the models except listed in this argument')
 
-
 args = parser.parse_args()
 
 import rbm
+import concurrent.futures
 from sys import exc_info
 
 def runAll():
@@ -29,10 +29,12 @@ def runAll():
     for model in model_names:
         try:
             benchmarker = rbm.utils.Benchmark(model=model, batch_size=args.batch_size, device=args.device)
-            benchmarks = benchmarker.execute(wandb=args.wandb, project_name=args.project_name)
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                benchmarks = executor.submit(benchmarker.execute, wandb=args.wandb, project_name=args.project_name)
+            benchmarks = benchmarks.result()
+
         except KeyboardInterrupt:
             raise KeyboardInterrupt('KeyboardInterrupt')
-            break
         except:
             print()
             head = h_sep*stars_length + ' Benchmark Error ' + h_sep*stars_length

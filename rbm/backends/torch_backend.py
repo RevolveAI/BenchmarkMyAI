@@ -22,6 +22,7 @@ class TorchBackend:
     def memory_info(self):
         if torch.cuda.is_available():
             memory_used = torch.cuda.memory_allocated(self.device)
+            memory_used = str(round(memory_used * 1e-6, 2)) + 'MB'
         else:
             memory_used = ''
         return memory_used
