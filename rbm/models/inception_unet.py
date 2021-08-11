@@ -7,15 +7,16 @@ from tensorflow.keras.layers import Conv2D as Convolution2D
 from tensorflow.keras.layers import Activation, BatchNormalization, MaxPooling2D, concatenate
 from tensorflow.keras.layers import UpSampling2D
 from ..utils import plugins
+from rbm.backends.vision import ImageProcessing
+from rbm.backends import TensorflowBackend
 
 
 @plugins.register
-class InceptionUNet:
-    def __init__(self, img_size=(224, 224), batch_size=None, channels=3,  n_labels=2, numFilters=32, output_mode="sigmoid"):
-        self.__framework__ = 'TensorFlow ' + tf.__version__
+class InceptionUNet(TensorflowBackend, ImageProcessing):
+    def __init__(self, device, img_size=(224, 224), batch_size=1, channels=3,  n_labels=2, numFilters=32, output_mode="sigmoid"):
+        TensorflowBackend.__init__(self, device=device)
+        ImageProcessing.__init__(self, img_size=img_size, batch_size=batch_size)
         self.__name__ = 'inception-unet'
-        self.__type__ = 'cv'
-        self.img_size = img_size
         # self.channels = channels
         self.n_labels = n_labels
         self.numFilters = numFilters

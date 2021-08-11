@@ -4,20 +4,21 @@ import transformers
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 import torch
 from rbm.utils import plugins
+from rbm.backends import TorchBackend
+from rbm.backends.nlp import QuestionAnswering, TextClassification
 
 
-class HuggingFace:
+class HuggingFace(TorchBackend):
 
-    def __init__(self, model_name, model_type, device='cpu:0', batch_size=None, **kwargs):
+    def __init__(self, model_name, device, **kwargs):
+        TorchBackend.__init__(self, device=device)
         self.model_name = model_name
         self.kwargs = kwargs
-        self.device = device
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, return_token_type_ids=True)
         self._model = None
         self._inputs = None
-        self.__framework__ = 'Pytorch ' + torch.__version__ + ' | HuggingFace Transformers ' + transformers.__version__
+        self.__framework__ = self.__framework__ + ' | HuggingFace Transformers ' + transformers.__version__
         self.__name__ = model_name
-        self.__type__ = model_type
 
     def _preprocess(self, inputs):
         if type(inputs) is dict:
@@ -46,24 +47,26 @@ class HuggingFace:
 
 
 @plugins.register
-class HuggingFaceQA(HuggingFace):
+class HuggingFaceQA(HuggingFace, QuestionAnswering):
     variants = ['PremalMatalia/albert-base-best-squad2', 'elgeish/cs224n-squad2.0-albert-base-v2',
                 'madlag/albert-base-v2-squad', 'twmkn9/albert-base-v2-squad2',
                 'twmkn9/distilbert-base-uncased-squad2', 'distilbert-base-uncased-distilled-squad']
     
-    def __init__(self, model_name, **kwargs):
-        super().__init__(model_name=model_name, model_type='nlp:qa', **kwargs)
+    def __init__(self, model_name, batch_size=1, **kwargs):
+        HuggingFace.__init__(self, model_name=model_name, **kwargs)
+        QuestionAnswering.__init__(self, batch_size=batch_size)
 
     def __call__(self):
         self._model = AutoModelForQuestionAnswering.from_pretrained(self.model_name).to(self.device)
 
 
 @plugins.register
-class HuggingFaceTC(HuggingFace):
+class HuggingFaceTC(HuggingFace, TextClassification):
     variants = ['distilbert-base-uncased-finetuned-sst-2-english', 'textattack/bert-base-uncased-imdb']
 
-    def __init__(self, model_name, **kwargs):
-        super().__init__(model_name=model_name, model_type='nlp:tc', **kwargs)
+    def __init__(self, model_name, batch_size=1, **kwargs):
+        HuggingFace.__init__(self, model_name=model_name, **kwargs)
+        TextClassification.__init__(self, batch_size=batch_size)
 
     def __call__(self):
         self._model = AutoModelForSequenceClassification.from_pretrained(self.model_name).to(self.device)

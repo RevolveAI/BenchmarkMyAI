@@ -7,24 +7,24 @@ import subprocess
 import tensorflow as tf
 import shutil
 from ..utils import plugins
+from rbm.backends.vision import ImageProcessing
+from rbm.backends import TensorflowBackend
 
 
 @plugins.register
-class EfficientDet:
+class EfficientDet(TensorflowBackend, ImageProcessing):
     variants = ['efficientdet-d0', 'efficientdet-d1', 'efficientdet-d2',
                 'efficientdet-d3', 'efficientdet-d4', 'efficientdet-d5',
                 'efficientdet-d6', 'efficientdet-d7']
 
-    def __init__(self, model_name, batch_size, img_size=(224, 224)):
+    def __init__(self, model_name, device, batch_size=1):
+        TensorflowBackend.__init__(self, device=device)
+        ImageProcessing.__init__(self, img_size=(224, 224), batch_size=batch_size)
         self.model_name = model_name
-        self.batch_size = batch_size
-        self.img_size = img_size
         self.export_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/tmp')
         self.export_model_dir = self.export_dir + '/model'
         self._model_ = None
-        self.__framework__ = 'TensorFlow ' + tf.__version__
         self.__name__ = model_name
-        self.__type__ = 'cv'
 
     def download_checkpoints(self):
         try:

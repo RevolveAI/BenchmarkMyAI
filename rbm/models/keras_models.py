@@ -1,10 +1,12 @@
 
 import tensorflow as tf
 from ..utils import plugins
+from rbm.backends.vision import ImageProcessing
+from rbm.backends import TensorflowBackend
 
 
 @plugins.register
-class KerasModels:
+class KerasModels(TensorflowBackend, ImageProcessing):
     variants = ['DenseNet121', 'DenseNet169', 'DenseNet201', 'EfficientNetB0',
                 'EfficientNetB1', 'EfficientNetB2', 'EfficientNetB3', 'EfficientNetB4',
                 'EfficientNetB5', 'EfficientNetB6', 'EfficientNetB7', 'InceptionResNetV2',
@@ -12,12 +14,11 @@ class KerasModels:
                 'NASNetLarge', 'NASNetMobile', 'ResNet101', 'ResNet101V2', 'ResNet152', 'ResNet152V2',
                 'ResNet50', 'ResNet50V2', 'VGG16', 'VGG19', 'Xception']
 
-    def __init__(self, model_name, img_size=(224, 224), batch_size=None, **kwargs):
+    def __init__(self, model_name, device=None, img_size=(224, 224), batch_size=1, **kwargs):
+        TensorflowBackend.__init__(self, device=device)
+        ImageProcessing.__init__(self, img_size=img_size, batch_size=batch_size)
         self.model_name = model_name
-        self.img_size = img_size
         self.kwargs = kwargs
-        self.__framework__ = 'TensorFlow ' + tf.__version__
-        self.__type__ = 'cv'
         self._model = None
 
     def __call__(self):

@@ -6,18 +6,18 @@ import nltk
 from nltk.tokenize import word_tokenize
 import torch
 from rbm.utils import plugins
+from rbm.backends import TorchBackend
+from rbm.backends.nlp import NER
 
 @plugins.register
-class NERDA:
+class NERDA(TorchBackend, NER):
     variants = ['EN_ELECTRA_EN', 'EN_BERT_ML']
 
-    def __init__(self, model_name, device='cpu', batch_size=1):
+    def __init__(self, model_name, device, batch_size=1):
+        TorchBackend.__init__(self, device=device)
+        NER.__init__(self, batch_size=batch_size)
         self.model_name = model_name
-        self.batch_size = batch_size
-        self.device = device
         self.__name__ = model_name
-        self.__framework__ = 'PyTorch ' + torch.__version__
-        self.__type__ = 'nlp:ner'
         self._model = None
 
     def __call__(self, *args, **kwargs):

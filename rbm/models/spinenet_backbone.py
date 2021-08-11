@@ -4,15 +4,16 @@
 import tensorflow as tf
 from official.vision.beta.modeling.backbones.spinenet import SpineNet as spineNet
 from ..utils import plugins
+from rbm.backends.vision import ImageProcessing
+from rbm.backends import TensorflowBackend
 
 
 @plugins.register
-class SpineNetBackbone:
-    def __init__(self, img_size=(128, 128), batch_size=None):
-        self.img_size = img_size
-        self.__framework__ = 'TensorFlow ' + tf.__version__
+class SpineNetBackbone(TensorflowBackend, ImageProcessing):
+    def __init__(self, device, img_size=(128, 128), batch_size=1):
+        TensorflowBackend.__init__(self, device=device)
+        ImageProcessing.__init__(self, img_size=img_size, batch_size=batch_size)
         self.__name__ = 'spinenet-backbone'
-        self.__type__ = 'cv'
         self._model = None
 
     def __call__(self):

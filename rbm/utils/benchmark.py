@@ -23,26 +23,9 @@ class Benchmark:
 
     def __init__(self, model, device=None, **kwargs):
         self.model = model
-        if device is None:
-            if len(tf.config.list_physical_devices(device_type='GPU')) > 0:
-                self.device = tf.config.list_physical_devices(device_type='GPU')[0].name.split('/physical_device:')[1]
-            else:
-                self.device = tf.config.list_physical_devices(device_type='CPU')[0].name.split('/physical_device:')[1]
-        else:
-            self.device = device
+        self.device = device
         self.kwargs = kwargs
 
-
-    def memory_info(self):
-        if 'cuda' in self.device:
-            memory_used = torch.cuda.memory_allocated(self.device)
-        elif 'GPU' in self.device:
-            memory_used = tf.config.experimental.get_memory_info(self.device)['peak']
-        else:
-            memory_used = ''
-        if memory_used != '':
-            memory_used = str(round(memory_used * 1e-6, 2)) + 'MB'
-        return memory_used
 
     @staticmethod
     def list_models():
@@ -52,10 +35,7 @@ class Benchmark:
         if type(self.model) is str:
             exited_models = models.models_names()
             if self.model in exited_models:
-                model = models.models(self.model, **self.kwargs)
-                if 'torch' in model.__framework__.lower():
-                    self.device = self.device.lower().replace('gpu', 'cuda')
-                    model.device = torch.device(self.device)
+                model = models.load(self.model, device=self.device, **self.kwargs)
                 model()
             else:
                 raise ValueError('invalid model name')
@@ -64,41 +44,8 @@ class Benchmark:
             model()
         return model
 
-    def generate_data(self, model_type, **kwargs):
-        if model_type == 'cv':
-            data = np.random.uniform(size=(self.kwargs.get('batch_size', 1), *kwargs.get('img_size', (224, 224)), 3))
-        elif model_type == 'nlp:qa':
-            data = {
-                'question': ["What was President Donald Trump's prediction?"]*self.kwargs.get('batch_size', 1),
-                'context': ["The US has passed the peak on new coronavirus cases, \
-President Donald Trump said and predicted that some states would reopen this month.\
-The US has over 637,000 confirmed Covid-19 cases and over 30,826 deaths, the highest for any \
-country in the world."]*self.kwargs.get('batch_size', 1)
-            }
-        elif model_type == 'nlp:ner':
-            data = ['Old MacDonald had a farm']*self.kwargs.get('batch_size', 1)
-        elif model_type == 'nlp:tc':
-            data = [['It seems to me that I can make everything impossible to possible']*self.kwargs.get('batch_size', 1)]
-        else:
-            data = None
-        return data
-
-    def _data_shape(self, data, model_type):
-        shape = {'batch_size': self.kwargs.get('batch_size', 1)}
-        if model_type == 'cv':
-            shape.update({'input_size': f'{data.shape[1]}x{data.shape[2]}'})
-        return shape
-
-    @contextmanager
-    def device_placement(self, framework):
-        if 'tensorflow' in framework.lower():
-            with tf.device(self.device):
-                yield
-        else:
-            yield
-
     def _calculate_benchmarks(self, model, inputs):
-        with self.device_placement(model.__framework__):
+        with model.device_placement():
             for _ in range(5):
                 model.predict(inputs)
             time_list = []
@@ -125,19 +72,15 @@ country in the world."]*self.kwargs.get('batch_size', 1)
         wandb_instance.close()
 
     def execute(self, wandb=False, project_name='benchmarks'):
-        _ = self.memory_info()
         model = self.load_model()
         model_type = model.__type__
         framework = model.__framework__
         model_name = model.__name__
-        dg_kwargs = {}
-        if hasattr(model, 'img_size'):
-            dg_kwargs = {'img_size': model.img_size}
-        data = self.generate_data(model_type=model_type, **dg_kwargs)
+        data = model.generate_data()
         if hasattr(model, 'preprocess'):
             data = model.preprocess(data)
         benchmarks = self._calculate_benchmarks(model=model, inputs=data)
-        gpu_memory_used = self.memory_info()
+        gpu_memory_used = model.memory_info()
 
         def get_size(bytes, suffix="B"):
             factor = 1024
@@ -147,10 +90,10 @@ country in the world."]*self.kwargs.get('batch_size', 1)
                 bytes /= factor
         output = {
                 'model': model_name,
-                'type': model_type.upper(),
-                **self._data_shape(data=data, model_type=model_type),
+                'type': model_type,
+                **model.data_shape(data),
                 'cpu': cpuinfo.get_cpu_info()['brand_raw'],
-                'gpus': ' | '.join([gpu.name for gpu in GPUtil.getGPUs()]) if 'CPU' not in self.device else '',
+                'gpus': ' | '.join([gpu.name for gpu in GPUtil.getGPUs()]) if gpu_memory_used != '' else '',
                 'memory': get_size(psutil.virtual_memory().total),
                 'os': platform.version(),
                 'python': platform.python_version(),
