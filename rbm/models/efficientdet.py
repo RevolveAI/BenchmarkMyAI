@@ -53,13 +53,8 @@ class EfficientDet(TensorflowBackend, ImageProcessing):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        print(stderr.decode("utf-8"))
-        # if stdout == '':
-        #     print(stderr.decode("utf-8"))
-        #     raise ValueError('for error details read above')
-        # else:
+        # print(stderr.decode("utf-8"))
         return [True]
-        # result = stdout.decode("utf-8")
 
     def load_model(self):
         model = tf.saved_model.load(self.export_model_dir)

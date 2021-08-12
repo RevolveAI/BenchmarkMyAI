@@ -6,7 +6,7 @@ A repository that contains code and benchmarks for commonly used models in Revol
 
 * Directory Tree
 * Install
-* Run Benchmarks
+* Quick Start
 * List of Available Models
 * Run with Weights and Biases
 * Add Custom Model
@@ -16,24 +16,39 @@ A repository that contains code and benchmarks for commonly used models in Revol
 ## Directory Tree
 
 ```
-Repository
+.
+├── main.py
+├── Makefile
 ├── rbm
-│   ├── __init__.py
-│   ├── make
-│   ├── models
-│   │   ├── saved_models
-│   │   ├── __init__.py
-│   │   ├── keras_models.py
-│   │   ├── efficientdet.py
-│   │   ├── spinenet_backbone.py
-│   │   └── inception_unet.py
-│   ├── requirements.txt
-│   └── utils
-│       ├── __init__.py
-│       ├── benchmark.py
-│       ├── plugins.py
-│       └── wandb.py
-└── README.md
+│   ├── backends
+│   │   ├── __init__.py
+│   │   ├── nlp.py
+│   │   ├── tensorflow_backend.py
+│   │   ├── torch_backend.py
+│   │   └── vision.py
+│   ├── __init__.py
+│   ├── models
+│   │   ├── efficientdet.py
+│   │   ├── hugging_face.py
+│   │   ├── inception_unet.py
+│   │   ├── __init__.py
+│   │   ├── keras_models.py
+│   │   ├── nerda.py
+│   │   ├── saved_models
+│   │   │   └── efficientdet
+│   │   │       └── ...
+│   │   └── spinenet_backbone.py
+│   └── utils
+│       ├── benchmark.py
+│       ├── __init__.py
+│       ├── plugins.py
+│       └── wandb.py
+├── README.md
+├── requirements.txt
+├── runall.py
+└── tests
+    ├── __init__.py
+    └── tensorflow-gpu.py
 ```
 
 ## Install
@@ -48,7 +63,7 @@ It will install all the required packages for this library.
 
 
 
-## Run Benchmarks
+## Quick Start
 
 Move to the directory where `rbm` folder is located. To calculate benchmarks, run the following code:
 
@@ -56,26 +71,39 @@ Move to the directory where `rbm` folder is located. To calculate benchmarks, ru
 # Import the library
 import rbm
 # Create benchmark instance
-benchmarker = rbm.utils.Benchmark(model='ResNet50', batch_size=2, img_size=(224,224), device='CPU:0')
-benchmarks = benchmarker.execute()
+benchmarks = rbm.utils.Benchmark(model='ResNet50', batch_size=2, img_size=(224,224), device='CPU:0').execute()
+print(benchmarks)
 ```
 
 Output will be as following:
 
 ```python
 {'model': 'resnet50',
- 'input_size': '224x224',
+ 'type': 'ImageProcessing',
  'batch_size': 2,
+ 'input_size': '224x224',
  'cpu': 'Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz',
  'gpus': '',
- 'memory': '15.54GB',
- 'os': '#71~20.04.1-Ubuntu SMP Thu Jul 15 17:46:08 UTC 2021',
+ 'memory': '15.53GB',
+ 'os': '#27~20.04.1-Ubuntu SMP Tue Jul 13 17:41:23 UTC 2021',
  'python': '3.9.5',
  'framework': 'TensorFlow 2.5.0',
  'gpu_memory_used': '',
- 'benchmark': {'inference_time': 246.02279029786587,
-  'throughput_time': 123.01139514893293,
-  'std': 6.702327991984426}}
+ 'benchmark': {'inference_time': 264.560681101284,
+  'throughput_time': 132.280340550642,
+  'std': 16.327607128523653}}
+```
+
+OR use the terminal as following:
+
+```bash
+python main.py ResNet50 --device="CPU:0" --optional img_size="(224,224)" batch_size="2"
+```
+
+To run the benchmarks for all the available models, use the following command:
+
+```bash
+python runall.py
 ```
 
 
@@ -83,9 +111,19 @@ Output will be as following:
 ## List of Available Models
 
 * InceptionUNet
-* SpineNet
+* SpineNetBackbone
 * efficientdet-d0 (other possible suffix are d1-d7)
 * All models available in Keras applications, [See](https://www.tensorflow.org/api_docs/python/tf/keras/applications#functions_2) list of Keras available models.
+* NERDA english models
+* HuggingFace text classification and question answering models
+
+To see full list of available models names, run following:
+
+```python
+rbm.models.models_names()
+```
+
+
 
 ## Run with Weights and Biases
 
@@ -107,8 +145,7 @@ After logging in successfully, execute benchmarks `execute` method with `wandb=T
 # Import the library
 import rbm
 # Create benchmark instance
-benchmarker = rbm.utils.Benchmark(model='ResNet50', batch_size=2, img_size=(224,224), device='CPU:0')
-benchmarks = benchmarker.execute(wandb=True)
+benchmarks = rbm.utils.Benchmark(model='ResNet50').execute(wandb=True)
 ```
 
 You should see your each benchmarks results in *wandb* project with project name *benchmarks* (by default). You must see 3 charts *std, inference_time* and *throughput_time* and a table with all benchmarks results. Each time you will run benchmarks, your results will append in *benchmarks* project.
@@ -122,20 +159,33 @@ You should see your each benchmarks results in *wandb* project with project name
 To calculate the benchmarks for your own custom model, your model should be in following format:
 
 ```python
-class ModelName:
-    def __init__(self, device='cuda:0', **kwargs):
-        self.device = device # device argument is necessary if model framework is pytorch, else no need 
-        self.__framework__ = 'Framework 2.3.0' # Required: Fullname of framework used for model
-        self.__name___ = 'model_name' # Optional: if class name not defining the model name, then optionaly pass the name of model
-        self.__type__ = 'cv' # Required: Type of model e.g. cv for computer vision, because data will be generated based on type.
+# This is an example of Image processing model with tensorflow backend
+
+
+from rbm.utils import plugins
+from rbm.backends.vision import ImageProcessing # Type  of model to generate data and calculate information
+from rbm.backends import TensorflowBackend # Backend used for model
+
+@plugins.register # Optional if model needs to be add under the direcotry path/to/repo/rbm/models/
+class ModelName(TensorflowBackend, ImageProcessing):
+    def __init__(self, device='GPU:0', img_size=(224, 224), batch_size=1, **kwargs):
+        TensorflowBackend.__init__(self, device=device)
+        ImageProcessing.__init__(self, img_size=img_size, batch_size=batch_size)
+        ''' 
+        Arguments: All these arguments will be acceptable in rbm.utils.Benchmark
+	        device: Optional for TensorflowBackend, if device setting acceptable else preferred device will be used
+	        img_size: Required, for ImageProcessing class to generate images of given size
+	        batch_size: Required, for ImageProcessing class to generate data of given batch size
+	        kwargs: Optional
+        '''
+        self.__name___ = 'model_name' # Name of the model
     def __call__(self):
         # This method should build your model
     def preprocess(self, inputs):
         # This is an optional method, if data need to be preprocessed before predictions and not required to add into inference benchmarking.
         return inputs
     def predict(self, inputs):
-        # This method should predict the model output
-        return predictions
+        # This method should predict the model output and actual inference will be calculated on this
 ```
 
 There are two ways to execute your custom model.
@@ -143,15 +193,15 @@ There are two ways to execute your custom model.
 1. Pass the `ModelName` class instance as following
 
    ```python
-   benchmarker = rbm.utils.Benchmark(model=ModelName, device='CPU:0')
+   benchmarker = rbm.utils.Benchmark(model=ModelName)
    ```
 
-2. First, add your model under the directory `rbm/models` and assign `@plugins.register` decorator to`ModelName` class which you can import as `from rbm.utils import plugins`. 
+2. First, add your model under the directory `path/to/repo/rbm/models` and assign `@plugins.register` decorator to `ModelName` class which you can import as `from rbm.utils import plugins`. 
 
    Then pass the model as following:
 
    ```python
-   benchmarker = rbm.utils.Benchmark(model='ModelName', device='CPU:0')
+   benchmarker = rbm.utils.Benchmark(model='ModelName')
    ```
    
    **Example:** Here is an example of building custom models:
@@ -159,31 +209,39 @@ There are two ways to execute your custom model.
    ```python
    # rbm/models/test_model.py
    
+   
    import tensorflow as tf
+   import rbm
    from rbm.utils import plugins
+   from rbm.backends import TensorflowBackend
+   from rbm.backends.vision import ImageProcessing
+   
    
    @plugins.register
-   class TestModel:
-       def __init__(self, img_size):
-           self.image_size = img_size
+   class TestModel(TensorflowBackend, ImageProcessing):
+       
+       def __init__(self, batch_size=1):
+           TensorflowBackend.__init__(self)
+           ImageProcessing.__init__(self, img_size=(128, 128), batch_size=batch_size)
            self._model = None
-           self.__framework__ = 'Tensorflow ' + tf.__version__
            self.__name__ = 'test-model'
-           self.__type__ = 'cv'
+           
        def __call__(self):
            inputs = tf.keras.Input((128, 128, 3))
            outputs = tf.keras.layers.Conv2D(6, (1, 1))(inputs)
            model = tf.keras.Model(inputs, outputs)
            self._model = model
+           
        def predict(self, inputs):
-           return self._model.predict(inputs)
+           self._model.predict(inputs)
+           
+           
    ```
    
    Now we can execute this model benchmarks as:
    
    ```python
-   benchmarker = rbm.utils.Benchmark(model='TestModel', batch_size=2, img_size=(224,224), device='CPU:0')
-   # batch_size is added for cv type models to generate data for respective batch_size
+   benchmarker = rbm.utils.Benchmark(model='TestModel', batch_size=2)
    benchmarks = benchmarker.execute()
    ```
    

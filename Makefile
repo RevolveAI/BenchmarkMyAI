@@ -3,7 +3,6 @@ python_bin ?= python
 init:
 	$(info **************** Installing Dependencies ****************)
 	$(python_bin) -m pip install -r requirements.txt
-	$(python_bin) -m pip install git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI
 	$(python_bin) -m pip install --no-deps tf-models-official
 	make test-gpu
 fresh:
