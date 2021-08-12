@@ -21,8 +21,8 @@ class EfficientDet(TensorflowBackend, ImageProcessing):
         TensorflowBackend.__init__(self, device=device)
         ImageProcessing.__init__(self, img_size=(224, 224), batch_size=batch_size)
         self.model_name = model_name
-        self.export_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/tmp')
-        self.export_model_dir = self.export_dir + '/model'
+        self.export_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models', 'efficientdet', 'tmp')
+        self.export_model_dir = os.path.join(self.export_dir, 'model')
         self._model_ = None
         self.__name__ = model_name
 
@@ -38,14 +38,14 @@ class EfficientDet(TensorflowBackend, ImageProcessing):
         tar.extractall(self.export_dir)
         tar.close()
         os.remove(filename)
-        ckpt_path = f'{self.export_dir}/{self.model_name}'
+        ckpt_path = os.path.join(self.export_dir, self.model_name)
         self.ckpt_path = ckpt_path
 
     def export_model(self):
         os.makedirs(self.export_model_dir)
-        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models/efficientdet/')
+        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models', 'efficientdet')
         # %%
-        process = subprocess.Popen(['python', model_path + '/model_inspect.py', '--runmode', 'saved_model',
+        process = subprocess.Popen(['python', os.path.join(model_path, 'model_inspect.py'), '--runmode', 'saved_model',
                                     '--model_name', self.model_name, '--ckpt_path', self.ckpt_path,
                                     '--saved_model_dir', self.export_model_dir,
                                     '--batch_size', str(self.batch_size),
@@ -53,10 +53,12 @@ class EfficientDet(TensorflowBackend, ImageProcessing):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        if stdout == '':
-            return [False, stderr.decode("utf-8")]
-        else:
-            return [True]
+        print(stderr.decode("utf-8"))
+        # if stdout == '':
+        #     print(stderr.decode("utf-8"))
+        #     raise ValueError('for error details read above')
+        # else:
+        return [True]
         # result = stdout.decode("utf-8")
 
     def load_model(self):
