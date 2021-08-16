@@ -10,6 +10,7 @@ A repository that contains code and benchmarks for commonly used models in Revol
 * List of Available Models
 * Run with Weights and Biases
 * Add Custom Model
+* License
 
 
 
@@ -17,6 +18,7 @@ A repository that contains code and benchmarks for commonly used models in Revol
 
 ```
 .
+├── LICENSE
 ├── main.py
 ├── Makefile
 ├── rbm
@@ -28,18 +30,36 @@ A repository that contains code and benchmarks for commonly used models in Revol
 │   │   └── vision.py
 │   ├── __init__.py
 │   ├── models
-│   │   ├── efficientdet.py
-│   │   ├── hugging_face.py
-│   │   ├── inception_unet.py
+│   │   ├── cv
+│   │   │   ├── classification
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── keras_models.py
+│   │   │   ├── __init__.py
+│   │   │   ├── object-detection
+│   │   │   │   ├── _efficientdet
+│   │   │   │   │	└── ...
+│   │   │   │   ├── efficientdet.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── spinenet_backbone.py
+│   │   │   └── segmentation
+│   │   │       ├── inception_unet.py
+│   │   │       └── __init__.py
 │   │   ├── __init__.py
-│   │   ├── keras_models.py
-│   │   ├── nerda.py
-│   │   ├── saved_models
-│   │   │   └── efficientdet
-│   │   │       └── ...
-│   │   └── spinenet_backbone.py
+│   │   └── nlp
+│   │       ├── classification
+│   │       │   ├── hugging_face.py
+│   │       │   └── __init__.py
+│   │       ├── hugging_face.py
+│   │       ├── __init__.py
+│   │       ├── ner
+│   │       │   ├── __init__.py
+│   │       │   └── nerda.py
+│   │       └── qa
+│   │           ├── hugging_face.py
+│   │           └── __init__.py
 │   └── utils
 │       ├── benchmark.py
+│       ├── info.py
 │       ├── __init__.py
 │       ├── plugins.py
 │       └── wandb.py
@@ -47,8 +67,8 @@ A repository that contains code and benchmarks for commonly used models in Revol
 ├── requirements.txt
 ├── runall.py
 └── tests
-    ├── __init__.py
-    └── tensorflow-gpu.py
+    ├── __init__.py
+    └── tensorflow-gpu.py
 ```
 
 ## Install
@@ -78,8 +98,9 @@ print(benchmarks)
 Output will be as following:
 
 ```python
-{'model': 'resnet50',
- 'type': 'ImageProcessing',
+{'model': 'ResNet50',
+ 'type': 'CV',
+ 'task': 'classification',
  'batch_size': 2,
  'input_size': '224x224',
  'cpu': 'Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz',
@@ -89,9 +110,9 @@ Output will be as following:
  'python': '3.9.5',
  'framework': 'TensorFlow 2.5.0',
  'gpu_memory_used': '',
- 'benchmark': {'inference_time': 264.560681101284,
-  'throughput_time': 132.280340550642,
-  'std': 16.327607128523653}}
+ 'benchmark': {'inference_time': 257.0438891998492,
+  'throughput_time': 128.5219445999246,
+  'std': 8.14146124318816}}
 ```
 
 OR use the terminal as following:
@@ -178,7 +199,9 @@ class ModelName(TensorflowBackend, ImageProcessing):
 	        batch_size: Required, for ImageProcessing class to generate data of given batch size
 	        kwargs: Optional
         '''
-        self.__name___ = 'model_name' # Name of the model
+        self.__name__ = 'model_name' # Name of the model
+        self.__type__ = 'CV' # Optional: if model is out of models directory
+        self.__task__ = 'classification' # Optional: if model is out of models directory
     def __call__(self):
         # This method should build your model
     def preprocess(self, inputs):
@@ -196,7 +219,7 @@ There are two ways to execute your custom model.
    benchmarker = rbm.utils.Benchmark(model=ModelName)
    ```
 
-2. First, add your model under the directory `path/to/repo/rbm/models` and assign `@plugins.register` decorator to `ModelName` class which you can import as `from rbm.utils import plugins`. 
+2. First, add your model under the directory `path/to/repo/rbm/models/path/to/model/category/` and assign `@plugins.register` decorator to `ModelName` class which you can import as `from rbm.utils import plugins`. 
 
    Then pass the model as following:
 
@@ -207,7 +230,7 @@ There are two ways to execute your custom model.
    **Example:** Here is an example of building custom models:
    
    ```python
-   # rbm/models/test_model.py
+   # rbm/models/cv/classification/test_model.py
    
    
    import tensorflow as tf
@@ -241,9 +264,13 @@ There are two ways to execute your custom model.
    Now we can execute this model benchmarks as:
    
    ```python
-   benchmarker = rbm.utils.Benchmark(model='TestModel', batch_size=2)
+   benchmarker = rbm.utils.Benchmark(model='test-model', batch_size=2) # call by defined name
    benchmarks = benchmarker.execute()
    ```
    
    
+
+# License
+
+[Apache License 2.0](LICENSE)
 
