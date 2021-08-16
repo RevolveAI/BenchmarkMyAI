@@ -1,6 +1,6 @@
 
 import tensorflow as tf
-from ..utils import plugins
+from rbm.utils import plugins
 from rbm.backends.vision import ImageProcessing
 from rbm.backends import TensorflowBackend
 
@@ -18,6 +18,7 @@ class KerasModels(TensorflowBackend, ImageProcessing):
         TensorflowBackend.__init__(self, device=device)
         ImageProcessing.__init__(self, img_size=img_size, batch_size=batch_size)
         self.model_name = model_name
+        self.__name__ = self.model_name
         self.kwargs = kwargs
         self._model = None
 
@@ -26,7 +27,6 @@ class KerasModels(TensorflowBackend, ImageProcessing):
         include_top = self.kwargs.pop('include_top', False)
         weights = self.kwargs.pop('weights', None)
         model = model(input_shape=(*self.img_size, 3), include_top=include_top, weights=weights, **self.kwargs)
-        self.__name__ = model.get_config()['name']
         self._model = model
 
     def predict(self, inputs):

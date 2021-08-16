@@ -6,7 +6,7 @@ import tarfile
 import subprocess
 import tensorflow as tf
 import shutil
-from ..utils import plugins
+from rbm.utils import plugins
 from rbm.backends.vision import ImageProcessing
 from rbm.backends import TensorflowBackend
 
@@ -21,7 +21,7 @@ class EfficientDet(TensorflowBackend, ImageProcessing):
         TensorflowBackend.__init__(self, device=device)
         ImageProcessing.__init__(self, img_size=(224, 224), batch_size=batch_size)
         self.model_name = model_name
-        self.export_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models', 'efficientdet', 'tmp')
+        self.export_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_efficientdet', 'tmp')
         self.export_model_dir = os.path.join(self.export_dir, 'model')
         self._model_ = None
         self.__name__ = model_name
@@ -43,7 +43,7 @@ class EfficientDet(TensorflowBackend, ImageProcessing):
 
     def export_model(self):
         os.makedirs(self.export_model_dir)
-        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_models', 'efficientdet')
+        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_efficientdet')
         # %%
         process = subprocess.Popen(['python', os.path.join(model_path, 'model_inspect.py'), '--runmode', 'saved_model',
                                     '--model_name', self.model_name, '--ckpt_path', self.ckpt_path,

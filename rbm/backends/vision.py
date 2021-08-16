@@ -1,6 +1,7 @@
 
 
 import numpy as np
+from rbm.utils.info import get_models_info
 
 
 class ImageProcessing:
@@ -8,7 +9,7 @@ class ImageProcessing:
     def __init__(self, batch_size, img_size, *args, **kwargs):
         self.batch_size = batch_size
         self.img_size = img_size
-        self.__type__ = 'ImageProcessing'
+        get_models_info(self)
 
     def generate_data(self):
         data = np.random.uniform(size=(self.batch_size, *self.img_size, 3))

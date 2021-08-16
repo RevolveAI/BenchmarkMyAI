@@ -3,7 +3,7 @@
 #%%
 import tensorflow as tf
 from official.vision.beta.modeling.backbones.spinenet import SpineNet as spineNet
-from ..utils import plugins
+from rbm.utils import plugins
 from rbm.backends.vision import ImageProcessing
 from rbm.backends import TensorflowBackend
 

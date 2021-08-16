@@ -6,7 +6,7 @@ from tensorflow.keras import Input
 from tensorflow.keras.layers import Conv2D as Convolution2D
 from tensorflow.keras.layers import Activation, BatchNormalization, MaxPooling2D, concatenate
 from tensorflow.keras.layers import UpSampling2D
-from ..utils import plugins
+from rbm.utils import plugins
 from rbm.backends.vision import ImageProcessing
 from rbm.backends import TensorflowBackend
 

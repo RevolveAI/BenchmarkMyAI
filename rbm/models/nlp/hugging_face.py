@@ -1,11 +1,11 @@
 
 
-import transformers
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
-import torch
-from rbm.utils import plugins
 from rbm.backends import TorchBackend
-from rbm.backends.nlp import QuestionAnswering, TextClassification
+import transformers
+from transformers import AutoTokenizer
+import torch
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class HuggingFace(TorchBackend):
@@ -44,37 +44,6 @@ class HuggingFace(TorchBackend):
             answer_tokens.append(ids_tokens[torch.argmax(start_scores[i]): torch.argmax(end_scores[i]) + 1])
             answers.append(self._tokenizer.convert_tokens_to_string(answer_tokens[i]))
         return answers
-
-
-@plugins.register
-class HuggingFaceQA(HuggingFace, QuestionAnswering):
-    variants = ['PremalMatalia/albert-base-best-squad2', 'elgeish/cs224n-squad2.0-albert-base-v2',
-                'madlag/albert-base-v2-squad', 'twmkn9/albert-base-v2-squad2',
-                'twmkn9/distilbert-base-uncased-squad2', 'distilbert-base-uncased-distilled-squad']
-    
-    def __init__(self, model_name, batch_size=1, **kwargs):
-        HuggingFace.__init__(self, model_name=model_name, **kwargs)
-        QuestionAnswering.__init__(self, batch_size=batch_size)
-
-    def __call__(self):
-        self._model = AutoModelForQuestionAnswering.from_pretrained(self.model_name).to(self.device)
-
-
-@plugins.register
-class HuggingFaceTC(HuggingFace, TextClassification):
-    variants = ['distilbert-base-uncased-finetuned-sst-2-english', 'textattack/bert-base-uncased-imdb']
-
-    def __init__(self, model_name, batch_size=1, **kwargs):
-        HuggingFace.__init__(self, model_name=model_name, **kwargs)
-        TextClassification.__init__(self, batch_size=batch_size)
-
-    def __call__(self):
-        self._model = AutoModelForSequenceClassification.from_pretrained(self.model_name).to(self.device)
-
-    def _postprocess(self, outputs):
-        return outputs[0].softmax(1)
-
-
 
 
 

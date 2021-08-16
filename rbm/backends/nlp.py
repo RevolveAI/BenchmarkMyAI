@@ -1,9 +1,13 @@
 
 
+from rbm.utils.info import get_models_info
+
+
 class NLP:
 
     def __init__(self, batch_size, *args, **kwargs):
         self.batch_size = batch_size
+        get_models_info(self)
 
     def data_shape(self, data):
         shape = {'batch_size': self.batch_size}
@@ -14,7 +18,6 @@ class QuestionAnswering(NLP):
 
     def __init__(self, batch_size, *args, **kwargs):
         super().__init__(batch_size=batch_size)
-        self.__type__ = 'QuestionAnswering'
 
     def generate_data(self):
         data = {
@@ -31,7 +34,6 @@ class NER(NLP):
 
     def __init__(self, batch_size, *args, **kwargs):
         super().__init__(batch_size=batch_size)
-        self.__type__ = "NER"
 
     def generate_data(self):
         data = ['Old MacDonald had a farm'] * self.batch_size
@@ -42,7 +44,6 @@ class TextClassification(NLP):
 
     def __init__(self, batch_size, *args, **kwargs):
         super().__init__(batch_size=batch_size)
-        self.__type__ = 'TextClassification'
 
     def generate_data(self):
         data = [['It seems to me that I can make everything impossible to possible'] * self.batch_size]
