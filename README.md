@@ -73,15 +73,24 @@ A repository that contains code and benchmarks for commonly used models in Revol
 
 ## Install
 
+#### **General Usage and Development Install:**
+
 To use the package, first clone the the repository on your local machine and move to the location where it is cloned, then install all the requirements as following:
 
-```
-make
+```bash
+python -m pip install -r rquirements.txt
+python -m pip install --no-deps tf-models-official
 ```
 
 It will install all the required packages for this library.
 
+#### **Pip Install**:
 
+To use this repository **only as** library without python files included, clone this repository and run:
+
+```bash
+python -m pip install .
+```
 
 ## Quick Start
 
@@ -115,7 +124,7 @@ Output will be as following:
   'std': 8.14146124318816}}
 ```
 
-OR use the terminal as following:
+OR use the terminal as following (not available in pip install):
 
 ```bash
 python main.py ResNet50 --device="CPU:0" --optional img_size="(224,224)" batch_size="2"
