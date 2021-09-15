@@ -1,4 +1,4 @@
-# Deep Learning Models Benchmarks
+# BenchmarkMyAI: Deep Learning Models Benchmarks
 
 A repository that contains code and benchmarks for commonly used models in RevolveAI.
 
